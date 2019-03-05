@@ -1,0 +1,24 @@
+{
+  "name": "react-native-shared-state",
+  "version": "1.0.0",
+  "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "native",
+    "shared",
+    "state",
+    "global",
+    "management"
+  ],
+  "author": "Dr Jonti Hudson",
+  "license": "ISC",
+  "devDependencies": {
+    "flow-bin": "^0.86.0",
+    "flow-remove-types": "^1.2.3"
+  },
+  "dependencies": {}
+}

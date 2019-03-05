@@ -1,0 +1,13 @@
+# dependencies
+
+node_modules/*
+
+# files
+
+src/*
+flow
+.vscode/
+.flowconfig
+.eslintrc
+.babelrc
+.DS_Store
