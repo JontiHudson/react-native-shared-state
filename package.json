@@ -1,6 +1,6 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
   "main": "lib/index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "management"
   ],
   "author": "Dr Jonti Hudson",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/JontiHudson/react-native-shared-state.git"

@@ -1,3 +1,3 @@
-import SharedState from "./lib/SharedState";
+import SharedState from "./lib";
 
 export default SharedState;
