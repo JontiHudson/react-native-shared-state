@@ -176,6 +176,14 @@ ExampleState.setState(partialState: object);
 
 _partialState - An object of key/value pairs. Functions can be used as values to manipulate current property values (see setting with functions below)._
 
+### Reset Properties
+
+State can be easily returned to its default state using the **reset()** method.
+
+```
+ExampleState.reset();
+```
+
 ---
 
 ## Advanced Features
