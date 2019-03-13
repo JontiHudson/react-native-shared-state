@@ -2,6 +2,10 @@
 
 A simple, light weight react native global state manager, packed with cool features.
 
+**Now uses hooks as well!!!**
+
+_Note: Version 0.3.0 onwards requires react native version 0.59.0 onwards, earier versions will still work with 0.2.0_
+
 ---
 
 Having looked at redux and ran away tail between my legs I decided to create a much more simple way of managing state across components.
@@ -176,12 +180,32 @@ ExampleState.setState(partialState: object);
 
 _partialState - An object of key/value pairs. Functions can be used as values to manipulate current property values (see setting with functions below)._
 
+#
+
 ### Reset Properties
 
 State can be easily returned to its default state using the **reset()** method.
 
 ```
 ExampleState.reset();
+```
+
+#
+
+### Using Hooks
+
+With react native version 0.59.0 we can now use hooks! This allows us to write components much more elegantly as functions. The **useState(_propName_)** utilises the power of hooks to re-render the function on property change. Now it can be done in a single line.
+
+```
+export default function DisplayCounter(props) {
+  const [counter] = CounterState.useState('counter');
+
+  return (
+    <View>
+      <Text>{counter}</Text>
+    </View>
+  );
+}
 ```
 
 ---
