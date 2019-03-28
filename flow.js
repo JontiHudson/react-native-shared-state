@@ -2,8 +2,6 @@
 
 import { Component, PureComponent } from "react";
 
-export type StateType = { [prop: string]: any } | {};
-
 export type ComparerType = string | Object | Array<string | Object>;
 export type ValidatorType = {
   [string]: ComparerType

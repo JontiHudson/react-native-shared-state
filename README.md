@@ -262,16 +262,6 @@ Note: Default state is also checked with the validator so make sure it is valid!
 
 #
 
-### Setting with Functions
-
-New property values can be set using the **setState()** method. However sometimes, like the counter example above, wewant to manipulate the current value. This can be done directly by passing in a function that's aurgument is the current value.
-
-```
-increaseCounter() {
-  CounterState.setState({ counter: currentValue => currentValue + 1 });
-}
-```
-
 ### Author
 
 - Jonti Hudson
