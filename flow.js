@@ -9,8 +9,7 @@ export type ValidatorType = {
 
 export type OptionsType = {
   validator?: ValidatorType,
-  debugMode?: boolean,
-  encryptionKey?: string
+  debugMode?: boolean
 };
 
 export type ComponentType = Component<any, any> | PureComponent<any, any>;
@@ -35,7 +34,10 @@ export interface SharedStateType<StateType: Object> {
     propKey: K
   ): [$ElementType<StateType, K>, ($ElementType<StateType, K>) => void];
 
-  useStorage(storeName: string): Promise<boolean>;
+  useStorage(
+    storeName: string,
+    options?: { saveOnBackground?: boolean, encryptionKey?: string }
+  ): Promise<boolean>;
   save(): boolean;
 
   toString(): string;

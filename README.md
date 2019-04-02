@@ -66,7 +66,7 @@ export default class DisplayCounter extends Component {
   }
 
   render() {
-    const { counter } = CounterState.getState();
+    const { counter } = CounterState.state;
 
     return (
       <View>
@@ -81,7 +81,7 @@ _By registering the component with key "counter", the component will re-render w
 
 _All registered components need to unregister on unmounting to remove event listeners and avoid memory leaks._
 
-_CounterState's properties can be cleanly destructured from it's getState method. Since this is fetched on each render it is alway up to date._
+_CounterState's properties can be cleanly destructured. Since this is fetched on each render it is alway up to date._
 
 #
 
@@ -90,7 +90,7 @@ Create the increase button
 ```
 export default class IncreaseCounter extends Component {
   increaseCounter() {
-    const { counter } = CounterState.getState();
+    const { counter } = CounterState.state;
     CounterState.setState({ counter: counter + 1 });
   }
 
@@ -106,7 +106,7 @@ export default class IncreaseCounter extends Component {
 }
 ```
 
-_Again, by destructuring getState we have easy access to state properties._
+_Again, by destructuring state we have easy access to state properties._
 
 _Setting state will overwrite current property causing all components registered to the property to re-render_
 
@@ -121,7 +121,7 @@ To start using shared states first import the class **SharedState** from your _n
 Create a new instance of the **SharedState** class with the name of your shared state. (This could be a global state, or a more specific shared state as seen later on.)
 
 ```
-const ExampleState = SharedState(defaultState: object, ?{validator: ?object, debugMode: ?boolean});
+const ExampleState = SharedState(defaultState: object, options?:{validator?: object, debugMode?: boolean});
 ```
 
 _defaultState - An object of key/value pairs that will be the initial state and the state which the share state will return to on reset(). Note: state values can be all types except functions._
@@ -160,10 +160,10 @@ _this - Use 'this' to pass the react component itself into the **shared state**.
 
 ### Getting state properties
 
-The **getState()** method returns the current state.
+The **state** property get the current state. **Warning: do not mutate the state directly as this will not cause components to re-render**
 
 ```
-const { exampleProp } = ExampleState.getState();
+const { exampleProp } = ExampleState.state;
 ```
 
 _Using object destructuring allows quick and clean access to state properties._
@@ -217,8 +217,12 @@ export default function DisplayCounter(props) {
 **Shared State** uses react native's _AsyncStorage_ to save the state between sessions. **useStorage()** loads the state from local storage and ensures the state is saved when the app closes. Since _AsyncStorage_ is asynchronous the method returns a promise, succeeding on set up.
 
 ```
-await ExampleState.useStorage(storeName: string);
+await ExampleState.useStorage(storeName: string, options?:{saveOnBackground?: boolean, encryptionKey?: string});
 ```
+
+_saveOnBackground - If true the app will try to save the data automatically when backgrounded._
+
+_encryptionKey - If provided, the state will be stored under AES encrpytion using the key._
 
 #
 
