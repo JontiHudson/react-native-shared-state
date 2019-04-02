@@ -1,6 +1,6 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
   "main": "lib/index.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "flow-remove-types": "^1.2.3"
   },
   "dependencies": {
-    "@react-native-community/async-storage": "^1.2.0"
+    "@react-native-community/async-storage": "^1.2.0",
+    "react-native-crypto-js": "^1.0.0"
   }
 }
