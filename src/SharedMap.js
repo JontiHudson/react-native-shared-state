@@ -359,6 +359,10 @@ export const SharedMap = class SharedMap<ElementType: Object>
 
   // HOOKS
 
+  useStore(): [?Date] {
+    return [this.useState("_lastUpdated")[0]];
+  }
+
   useElement(elementId: string): [ElementType, (ElementType) => void] {
     // This will be used as the key for the update function on the registation map
     const componentId = Symbol("Hook ID");

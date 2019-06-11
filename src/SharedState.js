@@ -288,7 +288,7 @@ export const SharedState = class SharedState<StateType: Object>
     const id = Symbol("Hook ID");
     const [prop, setProp] = useState(this._state[propKey]);
     // Use effect will be only run onMount due to [] as second arg.
-    useEffect((): (Symbol => void) => {
+    useEffect((): (() => void) => {
       this._registerHook(id, propKey, setProp);
       // By returning _unregisterHook, it will run on unmount
       return () => {
@@ -300,6 +300,19 @@ export const SharedState = class SharedState<StateType: Object>
       this.setState({ [propKey]: value });
     };
     return [prop, setStateProp];
+  }
+
+  connectAction(action: string => any, propKey: string) {
+    const id = Symbol("Hook ID");
+
+    useEffect((): (() => void) => {
+      this._registerHook(id, propKey, action);
+
+      // By returning _unregisterHook, it will run on unmount
+      return () => {
+        this._unregisterHook(id);
+      };
+    }, []);
   }
 
   _registerHook<K: $Keys<StateType>>(
