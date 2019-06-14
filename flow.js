@@ -34,7 +34,7 @@ export interface SharedStateType<StateType: Object> {
     propKey: K
   ): [$ElementType<StateType, K>, ($ElementType<StateType, K>) => void];
 
-  connectAction(action: (string) => any, propKey: string): void;
+  connectAction(action: (any) => any, propKey: string): void;
 
   useStorage(
     storeName: string,

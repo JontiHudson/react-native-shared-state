@@ -151,7 +151,14 @@ export const SharedState = class SharedState<StateType: Object>
     const defaultState = JSON.parse(JSON.stringify(this._defaultState));
 
     Object.assign(resetState, defaultState);
+
+    const validator = this._validator;
+    // Validator is skipped during reset
+    this._validator = undefined;
+
     this.setState(resetState);
+    this._validator = validator;
+
     if (this._asyncStoreName) {
       this.save();
     }
@@ -381,7 +388,6 @@ export const SharedState = class SharedState<StateType: Object>
       SharedState.getError("STORAGE_ERROR", e);
       // Any errors cause the state to reset to defaultState
       this.reset();
-      this.save();
     }
     return false;
   }
