@@ -33,11 +33,16 @@ export const SharedMap = class SharedMap<ElementType: Object>
   constructor(key: string, options: ShareMapOptionsType<ElementType> = {}) {
     const { validator, organiseFunctions, defaultData } = options;
 
+    const organisedArrays = {};
+    Object.keys(organiseFunctions || {}).forEach(name => {
+      organisedArrays[name] = [];
+    });
+
     const _defaultState = {
       _map: {},
       _lastUpdated: null,
       _size: 0,
-      organisedArrays: {}
+      organisedArrays
     };
 
     super(_defaultState, { debugMode: options.debugMode });
@@ -47,9 +52,6 @@ export const SharedMap = class SharedMap<ElementType: Object>
     this._registerElement = new Map();
 
     this._organiseFunctions = organiseFunctions || {};
-    Object.keys(this._organiseFunctions).forEach((name: string) => {
-      this._state.organisedArrays[name] = [];
-    });
 
     if (defaultData) {
       this.updateData(defaultData);

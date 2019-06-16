@@ -168,9 +168,17 @@ export const SharedState = class SharedState<StateType: Object>
   _validateObject(object: Object, validator: ValidatorType) {
     this._debugger({ object, validator });
 
-    Object.keys(validator).forEach(key => {
-      this._validateProp(object[key], validator[key]);
-    });
+    const keys = Object.keys(validator);
+
+    if (keys[0] === "_") {
+      Object.keys(object).forEach(objKey => {
+        this._validateProp(object[objKey], validator._);
+      });
+    } else {
+      Object.keys(validator).forEach(key => {
+        this._validateProp(object[key], validator[key]);
+      });
+    }
     return true;
   }
 
