@@ -77,6 +77,7 @@ export type ShareMapOptionsType<ElementType: Object> = {
 export interface SharedMapType<ElementType: Object>
   extends SharedStateType<MapStateType<ElementType>> {
   +data: Array<ElementType>;
+  +length: number;
   get(id: string): ?ElementType;
   set(element: ElementType, _update?: boolean): void;
   remove(id: string, _skipLastUpdated?: boolean): void;
@@ -88,5 +89,6 @@ export interface SharedMapType<ElementType: Object>
   registerElement(component: ComponentType, elementId: string): void;
   unregisterElement(component: ComponentType): void;
 
-  useElement(elementId: string): [ElementType, (ElementType) => void];
+  useElement(elementId: string): [?ElementType, (ElementType) => void];
+  useStore(): [?Date];
 }

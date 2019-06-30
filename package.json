@@ -1,9 +1,10 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.5.2",
+  "version": "0.5.6",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
+    "build": "flow-remove-types src/ -d lib/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,8 +22,13 @@
     "url": "https://github.com/JontiHudson/react-native-shared-state.git"
   },
   "devDependencies": {
-    "flow-bin": "^0.86.0",
-    "flow-remove-types": "^1.2.3"
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-jsx-a11y": "^6.2.2",
+    "eslint-plugin-react": "^7.14.2",
+    "flow-bin": "^0.92.0",
+    "flow-remove-types": "^2.102.0-rc"
   },
   "dependencies": {
     "@react-native-community/async-storage": "^1.2.0",

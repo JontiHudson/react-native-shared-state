@@ -73,6 +73,11 @@ export const SharedMap = class SharedMap<ElementType: Object>
     return Object.values(this.state._map);
   }
 
+  get length(): number {
+    // $FlowFixMe
+    return this._state._map.size;
+  }
+
   get organisedArrays(): { [string]: Array<ElementType> } {
     return this._state.organisedArrays;
   }
@@ -365,12 +370,12 @@ export const SharedMap = class SharedMap<ElementType: Object>
     return [this.useState("_lastUpdated")[0]];
   }
 
-  useElement(elementId: string): [ElementType, (ElementType) => void] {
+  useElement(elementId: string): [?ElementType, (ElementType) => void] {
     // This will be used as the key for the update function on the registation map
     const componentId = Symbol("Hook ID");
     const [element, setElement] = useState(this.get(elementId));
 
-    useEffect((): (Symbol => void) => {
+    useEffect((): (() => void) => {
       this._registerElementHook(componentId, elementId, setElement);
       // By returning _unregisterHook, it will run on unmount
       return () => {
