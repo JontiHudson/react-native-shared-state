@@ -1,2 +1,2 @@
-export * from "./lib/SharedMap";
-export * from "./lib/SharedState";
+export { default as SharedMap } from "./lib/SharedMap";
+export { default as SharedState } from "./lib/SharedState";

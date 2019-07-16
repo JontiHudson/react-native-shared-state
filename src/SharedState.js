@@ -1,6 +1,5 @@
 // @flow
 
-// $FlowFixMe
 import { useState, useEffect } from "react";
 // $FlowFixMe
 import { AppState, AsyncStorage } from "react-native";
@@ -8,26 +7,24 @@ import { AppState, AsyncStorage } from "react-native";
 import CryptoJS from "react-native-crypto-js";
 
 import type {
-  ValidatorType,
-  ComponentType,
   ComparerType,
-  AllowFunctionType,
+  ComponentType,
   OptionsType,
-  SharedStateType
+  SharedStateType,
+  StatesType,
+  ValidatorType
 } from "../flow";
 
-export const SharedState = class SharedState<StateType: Object>
+export default class SharedState<StateType: Object>
   implements SharedStateType<StateType> {
   _asyncStoreName: ?string;
-  _defaultState: StateType | {};
   _debugMode: ?boolean;
-  _validator: ?ValidatorType;
-  _register: Map<ComponentType | Symbol, (Object) => void>;
-  _state: StateType;
-  _prevState: StateType;
   _encryptionKey: ?string | false;
-  _saveOnBackground: ?boolean;
   _handleAppBackgrounded: string => void;
+  _register: Map<ComponentType | Symbol, (Object) => void>;
+  _saveOnBackground: ?boolean;
+  _states: StatesType<StateType>;
+  _validator: ?ValidatorType;
 
   static getError(code: string, ...arg: Array<any>): Error {
     // $FlowFixMe
@@ -37,14 +34,31 @@ export const SharedState = class SharedState<StateType: Object>
     return error;
   }
 
+  static clone<O: Object>(object: O): O {
+    const copy = {};
+    const keys = Object.keys(object);
+
+    keys.forEach((key: string) => {
+      const value = object[key];
+      if (Array.isArray(value)) {
+        copy[key] = Object.values(SharedState.clone({ ...value }));
+      } else if (value instanceof Object) {
+        copy[key] = SharedState.clone(value);
+      } else {
+        copy[key] = value;
+      }
+    });
+
+    // $FlowFixMe
+    return copy;
+  }
+
   constructor(defaultState?: StateType, options: OptionsType = {}) {
     const { debugMode, validator } = options;
 
-    this._handleAppBackgrounded = this._handleAppBackgrounded.bind(this);
-
     // Validate default state
     try {
-      if (defaultState && validator)
+      if (!!defaultState && !!validator)
         this._validateObject(defaultState, validator);
     } catch (err) {
       throw SharedState.getError(
@@ -56,15 +70,21 @@ export const SharedState = class SharedState<StateType: Object>
     }
 
     this._debugMode = debugMode;
-    this._defaultState = defaultState || {};
     this._validator = validator;
-
     this._register = new Map();
 
-    // Deep clone to prevent mutation of default state
-    this._state = JSON.parse(JSON.stringify(this._defaultState));
-    // prevState will allow for componentShouldUpdate comparisons
-    this._prevState = { ...this._state };
+    if (defaultState) {
+      this._states = {
+        defaultState,
+        // Deep clone to prevent mutation of default state
+        currentState: SharedState.clone(defaultState),
+        // prevState will allow for componentShouldUpdate comparisons
+        prevState: SharedState.clone(defaultState),
+        initialised: true
+      };
+    } else {
+      this._states = { initialised: false };
+    }
 
     this._debugger(this);
   }
@@ -73,7 +93,12 @@ export const SharedState = class SharedState<StateType: Object>
   // Helps prevent state being mutated incorrectly.
 
   get state(): StateType {
-    return this._state;
+    if (!this._states.initialised) {
+      throw SharedState.getError("GET_STATE_ERROR", {
+        message: "State has not been initalised."
+      });
+    }
+    return this._states.currentState;
   }
 
   set state(object: any) {
@@ -84,7 +109,12 @@ export const SharedState = class SharedState<StateType: Object>
   }
 
   get prevState(): StateType {
-    return this._prevState;
+    if (!this._states.initialised) {
+      throw SharedState.getError("GET_PREV_STATE_ERROR", {
+        message: "State has not been initalised."
+      });
+    }
+    return this._states.prevState;
   }
 
   set prevState(object: any) {
@@ -99,19 +129,32 @@ export const SharedState = class SharedState<StateType: Object>
     let updated = false;
 
     try {
+      if (!this._states.initialised) {
+        this._states = {
+          // $FlowFixMe
+          defaultState: this._states.defaultState,
+          // $FlowFixMe
+          currentState: {},
+          // $FlowFixMe
+          prevState: {},
+          initialised: true
+        };
+      }
+      const { currentState, prevState } = this._states;
+
       Object.keys(partialState).forEach(key => {
         // To reduce unwanted component re-renders only update props that have changed
-        if (partialState[key] !== this._state[key]) {
+        if (partialState[key] !== currentState[key]) {
           // Throws an error if prop fails validation
           if (this._validator) {
             this._validateProp(partialState[key], this._validator[key]);
           }
 
           // prevState updated
-          this._prevState[key] = this._state[key];
+          prevState[key] = currentState[key];
 
           // state updated
-          this._state[key] = partialState[key];
+          currentState[key] = partialState[key];
 
           // changed prop added to updatedState
           updatedState[key] = partialState[key];
@@ -140,24 +183,42 @@ export const SharedState = class SharedState<StateType: Object>
   }
 
   reset() {
-    this._debugger({ reset: this._defaultState });
+    if (!this._states.initialised) {
+      // Do nothing if not yet initialised
+      return;
+    }
 
-    // This will force update to all current state props even if not included in default state.
+    const { defaultState, currentState, prevState } = this._states;
+
+    this._debugger({ resetState: defaultState });
+
     const resetState = {};
-    Object.keys(this._state).forEach((key: string) => {
+    Object.keys(currentState).forEach((key: string) => {
+      // This will force update to all current state props even if not included in default state.
       resetState[key] = undefined;
     });
 
-    const defaultState = JSON.parse(JSON.stringify(this._defaultState));
+    if (defaultState) {
+      Object.assign(resetState, defaultState);
+    }
 
-    Object.assign(resetState, defaultState);
-
-    const validator = this._validator;
+    const _validator = this._validator;
     // Validator is skipped during reset
     this._validator = undefined;
 
     this.setState(resetState);
-    this._validator = validator;
+    this._validator = _validator;
+
+    if (defaultState) {
+      this._states = {
+        defaultState,
+        currentState: SharedState.clone(defaultState),
+        prevState: SharedState.clone(defaultState),
+        initialised: true
+      };
+    } else {
+      this._states = { initialised: false };
+    }
 
     if (this._asyncStoreName) {
       this.save();
@@ -267,14 +328,14 @@ export const SharedState = class SharedState<StateType: Object>
   ) {
     this._debugger({ register: { component, updateKeys } });
     const id = Symbol("Shared State ID");
-
-    // Allows for the use of single key or array of keys
-    if (typeof updateKeys === "string") {
-      updateKeys = [updateKeys];
-    }
+    const updateKeysArray = Array.isArray(updateKeys)
+      ? updateKeys
+      : [updateKeys];
 
     function onUpdate(updatedState: $Shape<StateType>) {
-      if (Object.keys(updatedState).some(key => updateKeys.includes(key))) {
+      if (
+        Object.keys(updatedState).some(key => updateKeysArray.includes(key))
+      ) {
         // By setting state with symbol it won't clash with any component state prop.
         // The update will cause the state to start the re-render cycle.
         // $FlowFixMe
@@ -295,54 +356,45 @@ export const SharedState = class SharedState<StateType: Object>
   }
 
   // HOOKS
-  useState<K: $Keys<StateType>>(
-    propKey: K
-    // $FlowFixMe
-  ): [$ElementType<StateType, K>, ($ElementType<StateType, K>) => void] {
+  useState(
+    updateKeys: $Keys<StateType> | Array<$Keys<StateType>>
+  ): [
+    StateType,
+    (partialState: $Shape<StateType>, callback?: () => any) => void
+  ] {
     // This will be used as the key for the update function on the registation map
     const id = Symbol("Hook ID");
-    const [prop, setProp] = useState(this._state[propKey]);
+    const updateKeysArray = Array.isArray(updateKeys)
+      ? updateKeys
+      : [updateKeys];
+
+    const reRender = useState({})[1];
     // Use effect will be only run onMount due to [] as second arg.
     useEffect((): (() => void) => {
-      this._registerHook(id, propKey, setProp);
+      this._registerHook(id, updateKeysArray, reRender);
       // By returning _unregisterHook, it will run on unmount
       return () => {
         this._unregisterHook(id);
       };
     }, []);
-    // setStateProp allows a quick way for function components to update the prop
-    const setStateProp = (value: $ElementType<StateType, K>) => {
-      this.setState({ [propKey]: value });
-    };
-    return [prop, setStateProp];
+
+    return [this.state, this.setState.bind(this)];
   }
 
-  connectAction(action: string => any, propKey: string) {
-    const id = Symbol("Hook ID");
-
-    useEffect((): (() => void) => {
-      this._registerHook(id, propKey, action);
-
-      // By returning _unregisterHook, it will run on unmount
-      return () => {
-        this._unregisterHook(id);
-      };
-    }, []);
-  }
-
-  _registerHook<K: $Keys<StateType>>(
+  _registerHook(
     id: Symbol,
-    propKey: K,
-    setProp: ($ElementType<StateType, K>) => void
+    updateKeys: Array<$Keys<StateType>>,
+    reRender: Function
   ) {
-    this._debugger({ registerHook: { id, propKey, setProp } });
+    this._debugger({ registerHook: { id, updateKeys } });
 
     function onUpdate(updatedState: $Shape<StateType>) {
-      if (Object.keys(updatedState).includes(propKey)) {
-        setProp(updatedState[propKey]);
-      }
-    }
+      const update = Object.keys(updatedState).some(key =>
+        updateKeys.includes(key)
+      );
 
+      update && reRender({});
+    }
     this._register.set(id, onUpdate);
   }
 
@@ -380,7 +432,10 @@ export const SharedState = class SharedState<StateType: Object>
 
       if (this._saveOnBackground) {
         // Starts listening to when the app's state changes
-        AppState.addEventListener("change", this._handleAppBackgrounded);
+        AppState.addEventListener(
+          "change",
+          this._handleAppBackgrounded.bind(this)
+        );
       }
 
       const storedState = JSON.parse(stateString);
@@ -411,7 +466,12 @@ export const SharedState = class SharedState<StateType: Object>
     try {
       if (!this._asyncStoreName) throw "Store not initalised";
 
-      let stateString = JSON.stringify(this._state);
+      if (!this._states.initialised) {
+        // Doesn't save if not initialised
+        return false;
+      }
+
+      let stateString = JSON.stringify(this.state);
       if (this._encryptionKey) {
         stateString = CryptoJS.AES.encrypt(
           stateString,
@@ -422,7 +482,10 @@ export const SharedState = class SharedState<StateType: Object>
       this._debugger(`Storing ${this._asyncStoreName || "undefined"}`);
       return true;
     } catch (err) {
-      SharedState.getError("STORAGE_SAVE_ERROR", { err });
+      SharedState.getError("STORAGE_SAVE_ERROR", {
+        err,
+        storeName: this._asyncStoreName
+      });
       return false;
     }
   }
@@ -433,6 +496,6 @@ export const SharedState = class SharedState<StateType: Object>
   }
 
   toString(): string {
-    return JSON.stringify(this._state, null, 2);
+    return JSON.stringify(this.state, null, 2);
   }
-};
+}

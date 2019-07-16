@@ -1,11 +1,8 @@
 // @flow
 
-// $FlowFixMe
 import { useState, useEffect } from "react";
-// $FlowFixMe
-import { AppState, AsyncStorage } from "react-native";
 
-import { SharedState } from "./SharedState";
+import SharedState from "./SharedState";
 
 import CryptoJS from "react-native-crypto-js";
 
@@ -22,9 +19,10 @@ import type {
   SharedMapType
 } from "../flow";
 
-export const SharedMap = class SharedMap<ElementType: Object>
+export default class SharedMap<ElementType: Object>
   extends SharedState<MapStateType<ElementType>>
   implements SharedMapType<ElementType> {
+  _defaultData: ?Array<ElementType>;
   _elementValidator: ?ComparerType;
   _registerElement: Map<ComponentType | Symbol, (Array<string> | null) => void>;
   _organiseFunctions: organiseFunctionsType<ElementType>;
@@ -38,6 +36,7 @@ export const SharedMap = class SharedMap<ElementType: Object>
       organisedArrays[name] = [];
     });
 
+    const _defaultData = defaultData;
     const _defaultState = {
       _map: {},
       _lastUpdated: null,
@@ -55,8 +54,6 @@ export const SharedMap = class SharedMap<ElementType: Object>
 
     if (defaultData) {
       this.updateData(defaultData);
-      this._defaultState = JSON.parse(JSON.stringify(this._state));
-      this._defaultState._lastUpdated = null;
     }
   }
 
@@ -74,12 +71,11 @@ export const SharedMap = class SharedMap<ElementType: Object>
   }
 
   get length(): number {
-    // $FlowFixMe
-    return this._state._map.size;
+    return this.state._map.size;
   }
 
   get organisedArrays(): { [string]: Array<ElementType> } {
-    return this._state.organisedArrays;
+    return this.state.organisedArrays;
   }
 
   set(element: ElementType, _update?: boolean = true) {
@@ -145,7 +141,6 @@ export const SharedMap = class SharedMap<ElementType: Object>
 
   _updateDataFromArray(newData: Array<ElementType>, newIds: Set<string>) {
     newData.forEach((element: ElementType) => {
-      // $FlowFixMe
       const id = element[this._key];
       this.set(element, false);
       newIds.add(id);
@@ -162,6 +157,10 @@ export const SharedMap = class SharedMap<ElementType: Object>
 
   reset() {
     super.reset();
+
+    if (this._defaultData) {
+      this.updateData(this._defaultData);
+    }
 
     // updates all connected components
     this._updateElements(null);
@@ -183,7 +182,7 @@ export const SharedMap = class SharedMap<ElementType: Object>
       this._organiseArray(
         elementArray,
         this._organiseFunctions[name],
-        this._state.organisedArrays[name]
+        this.state.organisedArrays[name]
       );
     });
   }
@@ -367,37 +366,31 @@ export const SharedMap = class SharedMap<ElementType: Object>
   // HOOKS
 
   useStore(): [?Date] {
-    return [this.useState("_lastUpdated")[0]];
+    // $FlowFixMe
+    return this.useState("_lastUpdated")[0];
   }
 
   useElement(elementId: string): [?ElementType, (ElementType) => void] {
     // This will be used as the key for the update function on the registation map
     const componentId = Symbol("Hook ID");
-    const [element, setElement] = useState(this.get(elementId));
+    const reRender = useState({})[1];
 
     useEffect((): (() => void) => {
-      this._registerElementHook(componentId, elementId, setElement);
+      this._registerElementHook(componentId, elementId, reRender);
       // By returning _unregisterHook, it will run on unmount
       return () => {
         this._unregisterElementHook(componentId);
       };
     }, []);
-    // setStateProp allows a quick way for function components to update the prop
-    const setMapElement = (newElement: ElementType) => {
-      this.set(newElement);
-    };
-    return [element, setMapElement];
+
+    return [this.get(elementId), this.set];
   }
 
-  _registerElementHook(
-    id: Symbol,
-    elementId: string,
-    setElement: (?ElementType) => void
-  ) {
+  _registerElementHook(id: Symbol, elementId: string, reRender: ({}) => void) {
     this._debugger({ registerHook: { id, elementId } });
     const onUpdate = (updatedIds: Array<string> | null) => {
       if (updatedIds === null || updatedIds.includes(elementId)) {
-        setElement(this.get(elementId));
+        reRender({});
       }
     };
     this._registerElement.set(id, onUpdate);
@@ -407,4 +400,4 @@ export const SharedMap = class SharedMap<ElementType: Object>
     this._debugger({ unregisterHook: { id } });
     this._register.delete(id);
   }
-};
+}

@@ -4,7 +4,7 @@
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
   "main": "index.js",
   "scripts": {
-    "build": "flow-remove-types src/ -d lib/",
+    "build": "babel src/ -d lib/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -31,7 +31,9 @@
     "flow-remove-types": "^2.102.0-rc"
   },
   "dependencies": {
-    "@react-native-community/async-storage": "^1.2.0",
+    "@babel/plugin-syntax-object-rest-spread": "^7.2.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
     "react-native-crypto-js": "^1.0.0"
   }
 }
