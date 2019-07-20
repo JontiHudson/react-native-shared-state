@@ -26,71 +26,90 @@ export default class SharedState<StateType: Object>
   _states: StatesType<StateType>;
   _validator: ?ValidatorType;
 
-  static getError(code: string, ...arg: Array<any>): Error {
-    // $FlowFixMe
-    const error = new Error(JSON.stringify({ code, ...arg }));
-    // $FlowFixMe
-    console.error({ code, ...arg });
+  // HELPERS
+
+  static getError(code: string, additionalFields?: Object = {}): Error {
+    const error = new Error(JSON.stringify({ ...additionalFields, code }));
+    console.error({ ...additionalFields, code });
     return error;
   }
 
-  static clone<O: Object>(object: O): O {
-    const copy = {};
-    const keys = Object.keys(object);
+  static deepClone<O: Object>(object: O): O {
+    try {
+      const objectCopy = {};
 
-    keys.forEach((key: string) => {
-      const value = object[key];
-      if (Array.isArray(value)) {
-        copy[key] = Object.values(SharedState.clone({ ...value }));
-      } else if (value instanceof Object) {
-        copy[key] = SharedState.clone(value);
-      } else {
-        copy[key] = value;
+      for (var key in object) {
+        const value = object[key];
+
+        if (Array.isArray(value)) {
+          objectCopy[key] = Object.values(SharedState.deepClone({ ...value }));
+        } else if (value instanceof Object) {
+          objectCopy[key] = SharedState.deepClone(value);
+        } else {
+          objectCopy[key] = value;
+        }
       }
-    });
 
-    // $FlowFixMe
-    return copy;
+      // $FlowFixMe
+      return objectCopy;
+    } catch (err) {
+      throw SharedState.getError("DEEP_CLONE_ERROR", {
+        err
+      });
+    }
   }
+
+  // INITIALISATION
 
   constructor(defaultState?: StateType, options: OptionsType = {}) {
     const { debugMode, validator } = options;
-
-    // Validate default state
-    try {
-      if (!!defaultState && !!validator)
-        this._validateObject(defaultState, validator);
-    } catch (err) {
-      throw SharedState.getError(
-        "CONSTRUCT_STATE_ERROR",
-        err,
-        defaultState,
-        validator
-      );
-    }
 
     this._debugMode = debugMode;
     this._validator = validator;
     this._register = new Map();
 
+    this.validateDefaultState(defaultState);
+    this.initialiseStates(defaultState);
+
+    this._debugger(this);
+  }
+
+  validateDefaultState(defaultState?: StateType) {
+    if (!!defaultState && !!this._validator) {
+      try {
+        this._validateObject(defaultState, this._validator);
+      } catch (err) {
+        throw SharedState.getError("CONSTRUCT_STATE_ERROR", {
+          err,
+          defaultState,
+          validator: this._validator
+        });
+      }
+    }
+  }
+
+  initialiseStates(defaultState?: StateType) {
     if (defaultState) {
+      // Deep deepClone to prevent mutation of default state
+      const defaultStateClone = SharedState.deepClone(defaultState);
+
       this._states = {
         defaultState,
-        // Deep clone to prevent mutation of default state
-        currentState: SharedState.clone(defaultState),
-        // prevState will allow for componentShouldUpdate comparisons
-        prevState: SharedState.clone(defaultState),
+        currentState: defaultStateClone,
+        prevState: { ...defaultStateClone },
         initialised: true
       };
     } else {
       this._states = { initialised: false };
     }
-
-    this._debugger(this);
   }
 
   // GETTERS AND SETTERS
   // Helps prevent state being mutated incorrectly.
+
+  get initialised(): boolean {
+    return this._states.initialised;
+  }
 
   get state(): StateType {
     if (!this._states.initialised) {
@@ -131,8 +150,7 @@ export default class SharedState<StateType: Object>
     try {
       if (!this._states.initialised) {
         this._states = {
-          // $FlowFixMe
-          defaultState: this._states.defaultState,
+          defaultState: undefined,
           // $FlowFixMe
           currentState: {},
           // $FlowFixMe
@@ -142,7 +160,7 @@ export default class SharedState<StateType: Object>
       }
       const { currentState, prevState } = this._states;
 
-      Object.keys(partialState).forEach(key => {
+      for (var key in partialState) {
         // To reduce unwanted component re-renders only update props that have changed
         if (partialState[key] !== currentState[key]) {
           // Throws an error if prop fails validation
@@ -160,13 +178,13 @@ export default class SharedState<StateType: Object>
           updatedState[key] = partialState[key];
           updated = true;
         }
-      });
+      }
 
       // Only send if a change has occured
       if (updated) this._send(updatedState);
     } catch (err) {
       console.log(err);
-      throw SharedState.getError("UPDATE_STATE_ERROR", err);
+      throw SharedState.getError("UPDATE_STATE_ERROR", { err });
     }
 
     // optional callback once complete
@@ -189,14 +207,14 @@ export default class SharedState<StateType: Object>
     }
 
     const { defaultState, currentState, prevState } = this._states;
+    const resetState = {};
 
     this._debugger({ resetState: defaultState });
 
-    const resetState = {};
-    Object.keys(currentState).forEach((key: string) => {
+    for (var key in currentState) {
       // This will force update to all current state props even if not included in default state.
       resetState[key] = undefined;
-    });
+    }
 
     if (defaultState) {
       Object.assign(resetState, defaultState);
@@ -205,20 +223,10 @@ export default class SharedState<StateType: Object>
     const _validator = this._validator;
     // Validator is skipped during reset
     this._validator = undefined;
-
     this.setState(resetState);
     this._validator = _validator;
 
-    if (defaultState) {
-      this._states = {
-        defaultState,
-        currentState: SharedState.clone(defaultState),
-        prevState: SharedState.clone(defaultState),
-        initialised: true
-      };
-    } else {
-      this._states = { initialised: false };
-    }
+    this.initialiseStates(defaultState);
 
     if (this._asyncStoreName) {
       this.save();
@@ -229,16 +237,18 @@ export default class SharedState<StateType: Object>
   _validateObject(object: Object, validator: ValidatorType) {
     this._debugger({ object, validator });
 
-    const keys = Object.keys(validator);
+    const validatorKeys = Object.keys(validator);
 
-    if (keys[0] === "_") {
-      Object.keys(object).forEach(objKey => {
+    if (validatorKeys[0] === "_") {
+      // _ acts as wild card so every object prop is tested against
+      // the validator prop.
+      for (var objKey in object) {
         this._validateProp(object[objKey], validator._);
-      });
+      }
     } else {
-      Object.keys(validator).forEach(key => {
+      for (var key in validator) {
         this._validateProp(object[key], validator[key]);
-      });
+      }
     }
     return true;
   }
@@ -248,9 +258,8 @@ export default class SharedState<StateType: Object>
 
     // Prop validator can be a single type or an array of types
     if (Array.isArray(validator)) {
-      const validatorLength = validator.length;
-      for (let i = 0; i < validatorLength; i++) {
-        if (this._isValid(prop, validator[i])) {
+      for (var validatorElement of validator) {
+        if (this._isValid(prop, validatorElement)) {
           return true;
         }
       }
@@ -260,50 +269,50 @@ export default class SharedState<StateType: Object>
     throw SharedState.getError("FAILED_VALIDATION", { prop, validator });
   }
 
-  _isValid(prop: any, validatorElement: string | Object) {
-    if (prop === null && validatorElement === "null") {
+  _isValid(prop: any, validatorProp: string | Object) {
+    if (prop === null && validatorProp === "null") {
       return true;
     }
 
-    if (prop === undefined && validatorElement === "void") {
+    if (prop === undefined && validatorProp === "void") {
       return true;
     }
 
     // Protects against NaN passing as a number
-    if (isNaN(prop) && validatorElement === "number") {
+    if (isNaN(prop) && validatorProp === "number") {
       return false;
     }
 
-    if (typeof prop === validatorElement && !Array.isArray(prop)) {
+    if (typeof prop === validatorProp && !Array.isArray(prop)) {
       return true;
     }
 
-    if (Array.isArray(prop) && validatorElement === "array") {
+    if (Array.isArray(prop) && validatorProp === "array") {
       return true;
     }
 
-    if (Array.isArray(prop) && Array.isArray(validatorElement)) {
-      const propLength = prop.length;
-      const validatorLength = validatorElement.length;
-
+    if (Array.isArray(prop) && Array.isArray(validatorProp)) {
       // If empty array passed at prop or as validator then passes
-      if (propLength === 0 || validatorLength === 0) {
+      if (prop.length === 0 || validatorProp.length === 0) {
         return true;
       }
 
-      for (let i = 0; i < validatorLength; i++) {
-        for (let j = 0; j < propLength; j++) {
-          if (this._validateProp(prop[j], validatorElement[i])) {
-            return true;
-          }
+      for (var propElement of prop) {
+        for (var validatorElement of validatorProp) {
+          try {
+            if (this._validateProp(propElement, validatorElement)) {
+              return true;
+            }
+          } catch (e) {}
         }
       }
+
       return false;
     }
 
     if (
-      typeof validatorElement === "object" ||
-      typeof validatorElement === "function"
+      typeof validatorProp === "object" ||
+      typeof validatorProp === "function"
     ) {
       // Allows for object properties to be validated against instances
       try {
@@ -313,7 +322,7 @@ export default class SharedState<StateType: Object>
       } catch (e) {}
       // Allows for use of object validators to validate nested props
       try {
-        if (this._validateObject(prop, validatorElement)) {
+        if (this._validateObject(prop, validatorProp)) {
           return true;
         }
       } catch (e) {}
@@ -471,7 +480,7 @@ export default class SharedState<StateType: Object>
         return false;
       }
 
-      let stateString = JSON.stringify(this.state);
+      let stateString = JSON.stringify(this._states.currentState);
       if (this._encryptionKey) {
         stateString = CryptoJS.AES.encrypt(
           stateString,

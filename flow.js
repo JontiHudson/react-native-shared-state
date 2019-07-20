@@ -26,8 +26,9 @@ export type StatesType<StateType: Object> =
 export type ComponentType = Component<any, any> | PureComponent<any, any>;
 
 export interface SharedStateType<StateType: Object> {
-  +state: StateType | {};
-  +prevState: StateType | {};
+  +initialised: boolean;
+  +state: StateType;
+  +prevState: StateType;
 
   setState(partialState: $Shape<StateType>, callback?: () => any): void;
   reset(): void;
@@ -60,11 +61,8 @@ export type MapType<ElementType: Object> = { [string]: ElementType };
 
 export type MapStateType<ElementType: Object> = {
   _map: MapType<ElementType>,
-  _lastUpdated: ?Date,
-  _size: number,
-  organisedArrays: {
-    [string]: Array<ElementType>
-  }
+  _organisedArrays: { [string]: Array<ElementType> },
+  _lastUpdated: ?Date
 };
 
 export type organiseFunctionType<ElementType: Object> = {
@@ -87,6 +85,7 @@ export interface SharedMapType<ElementType: Object>
   extends SharedStateType<MapStateType<ElementType>> {
   +data: Array<ElementType>;
   +length: number;
+  +organisedArrays: { [string]: Array<ElementType> };
   get(id: string): ?ElementType;
   set(element: ElementType, _update?: boolean): void;
   remove(id: string, _skipLastUpdated?: boolean): void;

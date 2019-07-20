@@ -24,33 +24,32 @@ export default class SharedMap<ElementType: Object>
   implements SharedMapType<ElementType> {
   _defaultData: ?Array<ElementType>;
   _elementValidator: ?ComparerType;
-  _registerElement: Map<ComponentType | Symbol, (Array<string> | null) => void>;
-  _organiseFunctions: organiseFunctionsType<ElementType>;
   _key: ?string;
+  _organiseFunctions: organiseFunctionsType<ElementType>;
+  _registerElement: Map<ComponentType | Symbol, (Array<string> | null) => void>;
 
-  constructor(key: string, options: ShareMapOptionsType<ElementType> = {}) {
-    const { validator, organiseFunctions, defaultData } = options;
+  constructor(key: string, options?: ShareMapOptionsType<ElementType> = {}) {
+    const { validator, organiseFunctions = {}, defaultData } = options;
 
-    const organisedArrays = {};
-    Object.keys(organiseFunctions || {}).forEach(name => {
-      organisedArrays[name] = [];
-    });
+    const _organisedArrays = {};
+    for (var name in organiseFunctions) {
+      _organisedArrays[name] = [];
+    }
 
-    const _defaultData = defaultData;
-    const _defaultState = {
-      _map: {},
-      _lastUpdated: null,
-      _size: 0,
-      organisedArrays
-    };
+    super(
+      {
+        _map: {},
+        _organisedArrays,
+        _lastUpdated: null
+      },
+      { debugMode: options.debugMode }
+    );
 
-    super(_defaultState, { debugMode: options.debugMode });
-
+    this._defaultData = defaultData;
     this._elementValidator = validator;
     this._key = key;
+    this._organiseFunctions = organiseFunctions;
     this._registerElement = new Map();
-
-    this._organiseFunctions = organiseFunctions || {};
 
     if (defaultData) {
       this.updateData(defaultData);
@@ -60,9 +59,7 @@ export default class SharedMap<ElementType: Object>
   // GETTERS AND SETTERS
 
   get(id: string): ?ElementType {
-    const element = this.state._map[id];
-
-    return element;
+    return this.state._map[id];
   }
 
   get data(): Array<ElementType> {
@@ -75,42 +72,37 @@ export default class SharedMap<ElementType: Object>
   }
 
   get organisedArrays(): { [string]: Array<ElementType> } {
-    return this.state.organisedArrays;
+    return this.state._organisedArrays;
   }
 
   set(element: ElementType, _update?: boolean = true) {
     var id;
+
     try {
-      id = element[this._key];
       if (this._elementValidator) {
         super._validateProp(element, this._elementValidator);
       }
 
-      const currentElement = this.state._map[id];
+      id = element[this._key];
       this.state._map[id] = element;
-      if (currentElement) {
-        if (_update) this._updateElements([id]);
-      } else {
-        this.state._size++;
-      }
+
       if (_update) {
         this._organiseArrays([element]);
-        this.setState({ _lastUpdated: new Date() });
+        this._updateElements([id]);
       }
     } catch (err) {
       throw SharedState.getError("SET_ELEMENT_ERROR", { element, id, err });
     }
   }
 
-  remove(id: string, _skipLastUpdated?: boolean) {
+  remove(id: string, _update?: boolean = true) {
     const currentElement = this.state._map[id];
     if (currentElement) {
       delete this.state._map[id];
-      this.state._size--;
     } else {
       throw SharedState.getError("ELEMENT_NOT_FOUND", { id });
     }
-    if (!_skipLastUpdated) {
+    if (_update) {
       this.setState({ _lastUpdated: new Date() });
     }
   }
@@ -127,7 +119,6 @@ export default class SharedMap<ElementType: Object>
       }
       this._organiseArrays(newData);
       this._updateElements([...ids]);
-      this.setState({ _lastUpdated: new Date() });
 
       if (callback) callback();
     } catch (err) {
@@ -140,19 +131,20 @@ export default class SharedMap<ElementType: Object>
   }
 
   _updateDataFromArray(newData: Array<ElementType>, newIds: Set<string>) {
-    newData.forEach((element: ElementType) => {
+    for (var element of newData) {
       const id = element[this._key];
       this.set(element, false);
       newIds.add(id);
-    });
+    }
   }
 
   _updateElements(ids: Array<string> | null) {
-    this._registerElement.forEach(
-      (onUpdate: (Array<string> | null) => void) => {
-        onUpdate(ids);
-      }
-    );
+    for (var onUpdate of this._registerElement) {
+      // $FlowFixMe
+      onUpdate(ids);
+    }
+
+    this.setState({ _lastUpdated: new Date() });
   }
 
   reset() {
@@ -164,7 +156,6 @@ export default class SharedMap<ElementType: Object>
 
     // updates all connected components
     this._updateElements(null);
-    this.setState({ _lastUpdated: new Date() });
   }
 
   // VALIDATION
@@ -178,13 +169,13 @@ export default class SharedMap<ElementType: Object>
   // ORGANISE
 
   _organiseArrays(elementArray: Array<ElementType>) {
-    Object.keys(this._organiseFunctions).forEach((name: string) => {
+    for (var name in this._organiseFunctions) {
       this._organiseArray(
         elementArray,
         this._organiseFunctions[name],
-        this.state.organisedArrays[name]
+        this.state._organisedArrays[name]
       );
-    });
+    }
   }
 
   _organiseArray(
@@ -210,35 +201,36 @@ export default class SharedMap<ElementType: Object>
     { filter, sort }: organiseFunctionType<ElementType>,
     tempArray: Array<{ element: ElementType, remove?: boolean }>
   ) {
-    var tempSize = 0;
+    let tempIndex = 0;
 
-    newElements.forEach((newElement: ElementType) => {
-      const element = {
+    for (const newElement of newElements) {
+      const organisedElement = {
         element: newElement,
         remove: filter && !filter(newElement)
       };
 
       if (!sort) {
-        tempArray.push(element);
+        tempArray.push(organisedElement);
         return;
       }
 
-      let tempIndex = tempSize - 1;
-
-      while (tempIndex >= 0) {
-        const comparerValue = sort(newElement, tempArray[tempIndex].element);
+      while (tempIndex > 0) {
+        const comparerValue = sort(
+          newElement,
+          tempArray[tempIndex - 1].element
+        );
         if (comparerValue < 0) {
           tempIndex--;
         } else {
-          tempArray.splice(tempIndex + 1, 0, element);
-          tempSize++;
+          tempArray.splice(tempIndex, 0, organisedElement);
+          tempIndex++;
           return;
         }
       }
-      tempArray.unshift(element);
-      tempSize++;
-      return;
-    });
+
+      tempArray.unshift(organisedElement);
+      tempIndex++;
+    }
   }
 
   _addToSortedArray(
@@ -251,14 +243,14 @@ export default class SharedMap<ElementType: Object>
     var organisedArrayLength = organisedArray.length;
     var startIndex = 0;
 
-    tempArray.forEach(({ element, remove }) => {
+    for (const { element, remove } of tempArray) {
       var oldRemoved = false;
-      var newAdded = remove;
+      var toAdd = !remove;
       var endIndex;
 
       for (
-        let i = startIndex || 0;
-        i < organisedArrayLength && !(newAdded && oldRemoved);
+        let i = startIndex;
+        i < organisedArrayLength && (toAdd || !oldRemoved);
         i++
       ) {
         const organisedElement = organisedArray[i];
@@ -268,24 +260,24 @@ export default class SharedMap<ElementType: Object>
           oldRemoved = true;
           organisedArrayLength--;
           i--;
-        } else if (!newAdded) {
+        } else if (toAdd) {
           const comparerValue = sort(element, organisedElement);
           if (comparerValue < 0) {
             organisedArray.splice(i, 0, element);
-            newAdded = true;
+            toAdd = false;
             organisedArrayLength++;
             endIndex = i;
           }
         }
       }
 
-      if (!newAdded) {
+      if (toAdd) {
         organisedArray.push(element);
         endIndex = organisedArrayLength + 1;
       }
 
       if (!oldRemoved) {
-        for (let i = 0; i < (startIndex || 0); i++) {
+        for (let i = 0; i < startIndex; i++) {
           if (element[key] === organisedArray[i][key]) {
             organisedArray.splice(i, 1);
             oldRemoved = true;
@@ -296,7 +288,7 @@ export default class SharedMap<ElementType: Object>
       }
 
       startIndex = endIndex;
-    });
+    }
   }
 
   _addToUnsortedArray(
@@ -304,7 +296,8 @@ export default class SharedMap<ElementType: Object>
     organisedArray: Array<ElementType>
   ) {
     const key = this._key;
-    tempArray.forEach(({ element, remove }) => {
+
+    for (const { element, remove } of tempArray) {
       const index = organisedArray.findIndex(
         organisedElement => organisedElement[key] === element[key]
       );
@@ -315,7 +308,7 @@ export default class SharedMap<ElementType: Object>
       } else {
         organisedArray.splice(index, 1, element);
       }
-    });
+    }
   }
 
   // REGISTRATION
