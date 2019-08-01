@@ -58,7 +58,7 @@ export default class SharedMap<ElementType: Object>
 
   // GETTERS AND SETTERS
 
-  get(id: string): ?ElementType {
+  get(id: string | number): ?ElementType {
     return this.state._map[id];
   }
 
@@ -139,7 +139,9 @@ export default class SharedMap<ElementType: Object>
   }
 
   _updateElements(ids: Array<string> | null) {
-    for (var onUpdate of this._registerElement) {
+    const onUpdateArray = this._registerElement.values();
+
+    for (var onUpdate of onUpdateArray) {
       // $FlowFixMe
       onUpdate(ids);
     }
@@ -363,7 +365,9 @@ export default class SharedMap<ElementType: Object>
     return this.useState("_lastUpdated")[0];
   }
 
-  useElement(elementId: string): [?ElementType, (ElementType) => void] {
+  useElement(
+    elementId: string | number
+  ): [?ElementType, (ElementType) => void] {
     // This will be used as the key for the update function on the registation map
     const componentId = Symbol("Hook ID");
     const reRender = useState({})[1];
@@ -379,7 +383,11 @@ export default class SharedMap<ElementType: Object>
     return [this.get(elementId), this.set];
   }
 
-  _registerElementHook(id: Symbol, elementId: string, reRender: ({}) => void) {
+  _registerElementHook(
+    id: Symbol,
+    elementId: string | number,
+    reRender: ({}) => void
+  ) {
     this._debugger({ registerHook: { id, elementId } });
     const onUpdate = (updatedIds: Array<string> | null) => {
       if (updatedIds === null || updatedIds.includes(elementId)) {

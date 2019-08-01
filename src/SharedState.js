@@ -229,7 +229,7 @@ export default class SharedState<StateType: Object>
     this.initialiseStates(defaultState);
 
     if (this._asyncStoreName) {
-      this.save();
+      AsyncStorage.removeItem(this._asyncStoreName);
     }
   }
 
@@ -471,9 +471,9 @@ export default class SharedState<StateType: Object>
     }
   }
 
-  save(): boolean {
+  save(storeName?: ?string = this._asyncStoreName): boolean {
     try {
-      if (!this._asyncStoreName) throw "Store not initalised";
+      if (!storeName) throw "Store not initalised";
 
       if (!this._states.initialised) {
         // Doesn't save if not initialised
@@ -487,13 +487,13 @@ export default class SharedState<StateType: Object>
           this._encryptionKey
         ).toString();
       }
-      AsyncStorage.setItem(this._asyncStoreName, stateString);
-      this._debugger(`Storing ${this._asyncStoreName || "undefined"}`);
+      AsyncStorage.setItem(storeName, stateString);
+      this._debugger(`Storing ${storeName || "undefined"}`);
       return true;
     } catch (err) {
       SharedState.getError("STORAGE_SAVE_ERROR", {
         err,
-        storeName: this._asyncStoreName
+        storeName
       });
       return false;
     }

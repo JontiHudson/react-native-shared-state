@@ -50,14 +50,14 @@ export interface SharedStateType<StateType: Object> {
     storeName: string,
     options?: { saveOnBackground?: boolean, encryptionKey?: string }
   ): Promise<boolean>;
-  save(): boolean;
+  save(storeName?: string): boolean;
 
   toString(): string;
 
   _validateProp(prop: any, validator: ComparerType): boolean;
 }
 
-export type MapType<ElementType: Object> = { [string]: ElementType };
+export type MapType<ElementType: Object> = { [string | number]: ElementType };
 
 export type MapStateType<ElementType: Object> = {
   _map: MapType<ElementType>,
@@ -86,7 +86,7 @@ export interface SharedMapType<ElementType: Object>
   +data: Array<ElementType>;
   +length: number;
   +organisedArrays: { [string]: Array<ElementType> };
-  get(id: string): ?ElementType;
+  get(id: string | number): ?ElementType;
   set(element: ElementType, _update?: boolean): void;
   remove(id: string, _skipLastUpdated?: boolean): void;
 
@@ -97,6 +97,6 @@ export interface SharedMapType<ElementType: Object>
   registerElement(component: ComponentType, elementId: string): void;
   unregisterElement(component: ComponentType): void;
 
-  useElement(elementId: string): [?ElementType, (ElementType) => void];
+  useElement(elementId: string | number): [?ElementType, (ElementType) => void];
   useStore(): [?Date];
 }
