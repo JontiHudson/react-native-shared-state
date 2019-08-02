@@ -383,9 +383,11 @@ export default class SharedMap<ElementType: Object>
     };
 
     useEffect((): (() => void) => {
+      isMounted.current = true;
       this._registerElementHook(componentId, elementId, reRender);
       // By returning _unregisterHook, it will run on unmount
       return () => {
+        isMounted.current = false;
         this._unregisterElementHook(componentId);
       };
     }, []);
