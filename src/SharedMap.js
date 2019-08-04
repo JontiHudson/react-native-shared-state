@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 
 import SharedState from "./SharedState";
-
 import CryptoJS from "react-native-crypto-js";
+
+import { deepClone, getError } from "./helpers";
 
 import type {
   ValidatorType,
@@ -91,7 +92,7 @@ export default class SharedMap<ElementType: Object>
         this._updateElements([id]);
       }
     } catch (err) {
-      throw SharedState.getError("SET_ELEMENT_ERROR", { element, id, err });
+      throw getError("SET_ELEMENT_ERROR", { element, id, err });
     }
   }
 
@@ -100,7 +101,7 @@ export default class SharedMap<ElementType: Object>
     if (currentElement) {
       delete this.state._map[id];
     } else {
-      throw SharedState.getError("ELEMENT_NOT_FOUND", { id });
+      throw getError("ELEMENT_NOT_FOUND", { id });
     }
     if (_update) {
       this.setState({ _lastUpdated: new Date() });
@@ -122,7 +123,7 @@ export default class SharedMap<ElementType: Object>
 
       if (callback) callback();
     } catch (err) {
-      throw SharedState.getError("UPDATE_MAP_ERROR", {
+      throw getError("UPDATE_MAP_ERROR", {
         newData,
         key: this._key,
         err
@@ -142,7 +143,6 @@ export default class SharedMap<ElementType: Object>
     const onUpdateArray = this._registerElement.values();
 
     for (var onUpdate of onUpdateArray) {
-      // $FlowFixMe
       onUpdate(ids);
     }
 
@@ -316,7 +316,7 @@ export default class SharedMap<ElementType: Object>
   // REGISTRATION
 
   register() {
-    throw SharedState.getError(
+    throw getError(
       "METHOD_MISSING",
       "use either registerStore() or registerElement()"
     );

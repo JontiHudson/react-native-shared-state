@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 // $FlowFixMe
 import { AppState, AsyncStorage } from "react-native";
-
 import CryptoJS from "react-native-crypto-js";
+
+import { deepClone, getError } from "./helpers";
 
 import type {
   ComparerType,
@@ -26,39 +27,6 @@ export default class SharedState<StateType: Object>
   _states: StatesType<StateType>;
   _validator: ?ValidatorType;
 
-  // HELPERS
-
-  static getError(code: string, additionalFields?: Object = {}): Error {
-    const error = new Error(JSON.stringify({ ...additionalFields, code }));
-    console.error({ ...additionalFields, code });
-    return error;
-  }
-
-  static deepClone<O: Object>(object: O): O {
-    try {
-      const objectCopy = {};
-
-      for (var key in object) {
-        const value = object[key];
-
-        if (Array.isArray(value)) {
-          objectCopy[key] = Object.values(SharedState.deepClone({ ...value }));
-        } else if (value instanceof Object) {
-          objectCopy[key] = SharedState.deepClone(value);
-        } else {
-          objectCopy[key] = value;
-        }
-      }
-
-      // $FlowFixMe
-      return objectCopy;
-    } catch (err) {
-      throw SharedState.getError("DEEP_CLONE_ERROR", {
-        err
-      });
-    }
-  }
-
   // INITIALISATION
 
   constructor(defaultState?: StateType, options: OptionsType = {}) {
@@ -79,7 +47,7 @@ export default class SharedState<StateType: Object>
       try {
         this._validateObject(defaultState, this._validator);
       } catch (err) {
-        throw SharedState.getError("CONSTRUCT_STATE_ERROR", {
+        throw getError("CONSTRUCT_STATE_ERROR", {
           err,
           defaultState,
           validator: this._validator
@@ -91,7 +59,7 @@ export default class SharedState<StateType: Object>
   initialiseStates(defaultState?: StateType) {
     if (defaultState) {
       // Deep deepClone to prevent mutation of default state
-      const defaultStateClone = SharedState.deepClone(defaultState);
+      const defaultStateClone = deepClone(defaultState);
 
       this._states = {
         defaultState,
@@ -113,7 +81,7 @@ export default class SharedState<StateType: Object>
 
   get state(): StateType {
     if (!this._states.initialised) {
-      throw SharedState.getError("GET_STATE_ERROR", {
+      throw getError("GET_STATE_ERROR", {
         message: "State has not been initalised."
       });
     }
@@ -121,7 +89,7 @@ export default class SharedState<StateType: Object>
   }
 
   set state(object: any) {
-    throw SharedState.getError("UPDATE_STATE_ERROR", {
+    throw getError("UPDATE_STATE_ERROR", {
       message:
         "State cannot be mutated directly, use the setState() method instead."
     });
@@ -129,7 +97,7 @@ export default class SharedState<StateType: Object>
 
   get prevState(): StateType {
     if (!this._states.initialised) {
-      throw SharedState.getError("GET_PREV_STATE_ERROR", {
+      throw getError("GET_PREV_STATE_ERROR", {
         message: "State has not been initalised."
       });
     }
@@ -137,7 +105,7 @@ export default class SharedState<StateType: Object>
   }
 
   set prevState(object: any) {
-    throw SharedState.getError("UPDATE_PREV_STATE_ERROR", {
+    throw getError("UPDATE_PREV_STATE_ERROR", {
       message: "Prev state is read only."
     });
   }
@@ -183,8 +151,7 @@ export default class SharedState<StateType: Object>
       // Only send if a change has occured
       if (updated) this._send(updatedState);
     } catch (err) {
-      console.log(err);
-      throw SharedState.getError("UPDATE_STATE_ERROR", { err });
+      throw getError("UPDATE_STATE_ERROR", { err });
     }
 
     // optional callback once complete
@@ -266,7 +233,7 @@ export default class SharedState<StateType: Object>
     } else if (this._isValid(prop, validator)) {
       return true;
     }
-    throw SharedState.getError("FAILED_VALIDATION", { prop, validator });
+    throw getError("FAILED_VALIDATION", { prop, validator });
   }
 
   _isValid(prop: any, validatorProp: string | Object) {
@@ -420,10 +387,7 @@ export default class SharedState<StateType: Object>
   ): Promise<boolean> {
     // Function should only be run once
     if (this._asyncStoreName) {
-      throw SharedState.getError(
-        "STORAGE_ERROR",
-        "Storage already initialised"
-      );
+      throw getError("STORAGE_ERROR", "Storage already initialised");
     }
 
     try {
@@ -457,7 +421,7 @@ export default class SharedState<StateType: Object>
         return true;
       }
     } catch (e) {
-      SharedState.getError("STORAGE_ERROR", e);
+      getError("STORAGE_ERROR", e);
       // Any errors cause the state to reset to defaultState
       this.reset();
     }
@@ -491,7 +455,7 @@ export default class SharedState<StateType: Object>
       this._debugger(`Storing ${storeName || "undefined"}`);
       return true;
     } catch (err) {
-      SharedState.getError("STORAGE_SAVE_ERROR", {
+      getError("STORAGE_SAVE_ERROR", {
         err,
         storeName
       });
