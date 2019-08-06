@@ -203,9 +203,8 @@ export default class SharedMap<ElementType: Object>
     { filter, sort }: organiseFunctionType<ElementType>,
     tempArray: Array<{ element: ElementType, remove?: boolean }>
   ) {
-    let tempIndex = 0;
-
-    for (const newElement of newElements) {
+    newElementLoop: for (const newElement of newElements) {
+      let tempIndex = tempArray.length;
       const organisedElement = {
         element: newElement,
         remove: filter && !filter(newElement)
@@ -221,17 +220,17 @@ export default class SharedMap<ElementType: Object>
           newElement,
           tempArray[tempIndex - 1].element
         );
+
         if (comparerValue < 0) {
           tempIndex--;
         } else {
           tempArray.splice(tempIndex, 0, organisedElement);
           tempIndex++;
-          return;
+          continue newElementLoop;
         }
       }
 
       tempArray.unshift(organisedElement);
-      tempIndex++;
     }
   }
 
