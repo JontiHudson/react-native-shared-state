@@ -4,11 +4,5 @@ node_modules/*
 
 # files
 
-example/*
-src/*
-flow
 .vscode/
-.flowconfig
 .eslintrc
-.babelrc
-.DS_Store

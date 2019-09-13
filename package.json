@@ -1,12 +1,10 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.6.9",
+  "version": "0.7.0",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
-  "main": "index.js",
-  "scripts": {
-    "build": "babel src/ -d lib/",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "main": "./lib/index.js",
+  "types": "./lib/types.d.ts",
+  "scripts": {},
   "keywords": [
     "react",
     "native",
@@ -22,18 +20,14 @@
     "url": "https://github.com/JontiHudson/react-native-shared-state.git"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-plugin-import": "^2.18.0",
-    "eslint-plugin-jsx-a11y": "^6.2.2",
-    "eslint-plugin-react": "^7.14.2",
-    "flow-bin": "^0.92.0",
-    "flow-remove-types": "^2.102.0-rc"
+    "eslint": "^6.3.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.14.3",
+    "eslint-plugin-react-hooks": "^1.7.0"
   },
   "dependencies": {
-    "@babel/plugin-syntax-object-rest-spread": "^7.2.0",
-    "babel-cli": "^6.26.0",
-    "babel-preset-flow": "^6.23.0",
     "react-native-crypto-js": "^1.0.0"
   }
 }
