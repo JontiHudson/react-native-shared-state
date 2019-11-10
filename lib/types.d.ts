@@ -45,7 +45,10 @@ declare class SharedState<StateType extends Object> {
 
   public useState(
     updateKeys: keyof StateType | Array<keyof StateType>,
-  ): [StateType, (partialState: Partial<StateType>, callback?: () => any) => void];
+  ): [
+    StateType,
+    (partialState: Partial<StateType>, callback?: () => any) => void,
+  ];
 
   public useStorage(
     storeName: string,
@@ -85,7 +88,7 @@ export type ShareMapOptionsType<ElementType extends Object> = {
   organiseFunctions?: organiseFunctionsType<ElementType>;
 };
 
-declare class SharedMap<ElementType extends Object> extends SharedStateType<
+declare class SharedMap<ElementType extends Object> extends SharedState<
   MapStateType<ElementType>
 > {
   readonly data: Array<ElementType>;
@@ -94,11 +97,16 @@ declare class SharedMap<ElementType extends Object> extends SharedStateType<
 
   readonly organisedArrays: { [key: string]: Array<ElementType> };
 
+  constructor(
+    key: keyof ElementType,
+    options?: ShareMapOptionsType<ElementType>,
+  );
+
   get(id: string | number): ElementType | void;
 
   set(element: ElementType, _update?: boolean): void;
 
-  remove(id: string, _skipLastUpdated?: boolean): void;
+  remove(id: string | number, _skipLastUpdated?: boolean): void;
 
   updateData(newData: Array<ElementType>, callback?: () => any): void;
 
@@ -110,7 +118,9 @@ declare class SharedMap<ElementType extends Object> extends SharedStateType<
 
   unregisterElement(component: ComponentType): void;
 
-  useElement(elementId: string | number): [ElementType | void, (element: ElementType) => void];
+  useElement(
+    elementId: string | number,
+  ): [ElementType | void, (element: ElementType) => void];
 
   useStore(): [Date | void];
 }
