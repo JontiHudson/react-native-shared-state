@@ -4,8 +4,6 @@ A simple, light weight react native global state manager, packed with cool featu
 
 **Now uses hooks as well!!!**
 
-_Note: Version 0.3.0 onwards requires react native version 0.59.0 onwards, earier versions will still work with 0.2.0_
-
 ---
 
 Having looked at redux and ran away tail between my legs I decided to create a much more simple way of managing state across components.
@@ -17,7 +15,6 @@ Having looked at redux and ran away tail between my legs I decided to create a m
 - Create one (or even multiple) state objects that can be shared between multiple components.
 - Have any part of your code update the shared state.
 - Register components so that they automatically re-render when selected state properties change.
-- Enforce data validation on state properties to prevent accidental state corruption.
 - Persist state between sessions.
 
 ---
@@ -223,46 +220,6 @@ await ExampleState.useStorage(storeName: string, options?:{saveOnBackground?: bo
 _saveOnBackground - If true the app will try to save the data automatically when backgrounded._
 
 _encryptionKey - If provided, the state will be stored under AES encrpytion using the key._
-
-#
-
-### Data Validation
-
-To use validation, pass a validator object into the **SharedState** constructor. All data that is to be set in the state is passed through the validator.
-
-```
-const defaultState = {
-  username: null,
-  password: null,
-  loggedIn: false,
-  token: null
-};
-
-const validator = {
-  username: ['null', 'string'],
-  password: ['null', 'string'],
-  loggedIn: 'boolean',
-  token: ['null', {_id: 'string', expires: Date}]
-};
-
-const AuthState = SharedState(defaultState, { validator });
-
-AuthState.setState({
-  username: 'johndoe'
-  password: 123456
-});
-// Fails
-
-AuthState.setState({
-  username: 'johndoe'
-  password: '123456'
-});
-// Passes
-```
-
-Vaildator values should be either a string of the primitive type's name or a class, e.g. Date. Objects can be used to validate nested structure. If the value can be more than one type/schema use an array.
-
-Note: Default state is also checked with the validator so make sure it is valid!
 
 #
 
