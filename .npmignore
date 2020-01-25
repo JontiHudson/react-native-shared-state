@@ -2,6 +2,10 @@
 
 node_modules/*
 
+# documentation
+
+documentation/*
+
 # files
 
 .vscode/
