@@ -1,9 +1,9 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
-  "main": "./lib/index.js",
-  "types": "build/index.d.ts",
+  "main": "./build/index.js",
+  "types": "./types/index.d.ts",
   "scripts": {},
   "keywords": [
     "react",
@@ -30,7 +30,7 @@
     "eslint-plugin-react-hooks": "^1.7.0"
   },
   "dependencies": {
-    "extended_err": "^1.5.4",
+    "extended_err": "^1.5.5",
     "react-native-crypto-js": "^1.0.0"
   }
 }

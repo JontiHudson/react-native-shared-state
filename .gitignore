@@ -1,8 +1,11 @@
+# build
+
 build/
+types/
 
 # dependencies
 
-node_modules/*
+node_modules/
 
 # files
 
