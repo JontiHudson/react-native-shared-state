@@ -37,6 +37,7 @@ export class SharedState<S extends State> {
       code: 'UPDATE_STATE_ERROR',
       message:
         'State cannot be mutated directly, use the setState() method instead.',
+      severity: 'MEDIUM',
     });
   }
 
@@ -49,6 +50,7 @@ export class SharedState<S extends State> {
       name: 'State Error',
       code: 'UPDATE_PREV_STATE_ERROR',
       message: 'Prev state is read only.',
+      severity: 'MEDIUM',
     });
   }
 
@@ -80,6 +82,7 @@ export class SharedState<S extends State> {
         name: 'State Error',
         code: 'UPDATE_STATE_ERROR',
         message: 'Update state error',
+        severity: 'HIGH',
       });
     }
 
@@ -94,6 +97,7 @@ export class SharedState<S extends State> {
         name: 'State Error',
         code: 'REFRESH_STATE_ERROR',
         message: 'Refresh state error',
+        severity: 'HIGH',
       });
     }
   }
@@ -116,6 +120,7 @@ export class SharedState<S extends State> {
         name: 'State Error',
         code: 'RESET_STATE_ERROR',
         message: 'Reset state error',
+        severity: 'HIGH',
       });
     }
   }
@@ -168,6 +173,7 @@ export class SharedState<S extends State> {
         name: 'State Error',
         code: 'STORAGE_ERROR',
         message: 'Error loading from storage',
+        severity: 'HIGH',
       });
 
       this.reset();

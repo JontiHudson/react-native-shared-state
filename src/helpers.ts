@@ -27,6 +27,7 @@ export function deepClone<O extends Object>(object: O): O {
       name: 'State Error',
       code: 'DEEP_CLONE_ERROR',
       message: 'Unable to deep clone object',
+      severity: 'HIGH',
     });
   }
 }

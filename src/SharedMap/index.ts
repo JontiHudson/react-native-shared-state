@@ -61,6 +61,7 @@ export class SharedMap<
         name: 'State Error',
         code: 'ADD_DATA_ERROR',
         message: 'Error adding data',
+        severity: 'HIGH',
       });
     }
 
@@ -76,6 +77,7 @@ export class SharedMap<
         name: 'State Error',
         code: 'REFRESH_MAP_ERROR',
         message: 'Refresh map error',
+        severity: 'HIGH',
       });
     }
   }
@@ -92,6 +94,7 @@ export class SharedMap<
         name: 'State Error',
         code: 'REMOVE_DATA_ERROR',
         message: 'Error removing data',
+        severity: 'HIGH',
       });
     }
 
@@ -117,6 +120,7 @@ export class SharedMap<
         name: 'State Error',
         code: 'RESET_MAP_ERROR',
         message: 'Reset map error',
+        severity: 'HIGH',
       });
     }
   }
@@ -126,6 +130,7 @@ export class SharedMap<
       name: 'State Error',
       code: 'SET_DATA_ERROR',
       message: 'Cannot set state on SharedMap',
+      severity: 'HIGH',
     });
   }
 
@@ -191,6 +196,7 @@ export class SharedMap<
         name: 'State Error',
         code: 'STORAGE_ERROR',
         message: 'Error loading from storage',
+        severity: 'HIGH',
       });
 
       this.resetData();

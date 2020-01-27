@@ -42,6 +42,7 @@ export class StorageHandler<S extends State> {
         name: 'State Error',
         code: 'STORAGE_ERROR',
         message: 'Error loading from storage',
+        severity: 'HIGH',
       });
     }
   }
@@ -68,6 +69,7 @@ export class StorageHandler<S extends State> {
         code: 'STORAGE_SAVE_ERROR',
         message: 'Unable to save state',
         info: { storeName: this.storeName },
+        severity: 'HIGH',
       });
 
       return false;
