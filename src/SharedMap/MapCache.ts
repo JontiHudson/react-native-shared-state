@@ -31,11 +31,11 @@ export class MapCache<E extends Element, K extends keyof E> extends StateCache<
     return updatedElements;
   }
 
-  remove(removeElements: E[]) {
+  remove(removeElements: E[K][]) {
     let updated = false;
 
-    removeElements.forEach(element => {
-      if (super.updateProp(element[this.key], undefined)) {
+    removeElements.forEach(key => {
+      if (super.updateProp(key, undefined)) {
         updated = true;
       }
     });

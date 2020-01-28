@@ -14,7 +14,7 @@ type MapOptions<E extends Element> = {
   defaultData?: E[];
 };
 
-type ListState = { updater: Symbol };
+type ListState = { updateId: Symbol };
 
 export class SharedMap<
   E extends Element,
@@ -22,27 +22,29 @@ export class SharedMap<
 > extends SharedState<ListState> {
   private dataStorageHandler: StorageHandler<Map<E>>;
   private elementRegister: ComponentRegister<Map<E>>;
-  private key: K;
   private mapCache: MapCache<E, K>;
 
   constructor(key: K, options: MapOptions<E> = {}) {
     const { debugMode, defaultData = [] } = options;
 
-    super({ updater: Symbol('Initial updater') }, { debugMode });
+    super({ updateId: Symbol('Initial updater') }, { debugMode });
 
     this.elementRegister = new ComponentRegister();
-    this.key = key;
     this.mapCache = new MapCache<E, K>(defaultData, key);
 
     super.debugger(this);
   }
 
-  get(id: string) {
+  get(id: string | number) {
     return this.mapCache.current[id];
   }
 
-  get data() {
+  get array() {
     return Object.values(this.mapCache.current);
+  }
+
+  get map() {
+    return this.mapCache.current;
   }
 
   add(newElements: E | E[], callback?: () => void) {
@@ -68,6 +70,19 @@ export class SharedMap<
     if (callback) callback();
   }
 
+  memo<T>(memoFunction: (array?: E[]) => T) {
+    let lastUpdated: Symbol = null;
+    let memoValue: T = null;
+
+    return () => {
+      if (this.state.updateId !== lastUpdated) {
+        memoValue = memoFunction(this.array);
+        lastUpdated = this.state.updateId;
+      }
+      return memoValue;
+    };
+  }
+
   refresh() {
     try {
       this.elementRegister.update(true);
@@ -82,7 +97,7 @@ export class SharedMap<
     }
   }
 
-  remove(removeElements: E | E[], callback?: () => void) {
+  remove(removeElements: E[K] | E[K][], callback?: () => void) {
     try {
       const updated = this.mapCache.remove(toArray(removeElements));
 
@@ -153,7 +168,7 @@ export class SharedMap<
   }
 
   registerList(component: React.Component) {
-    super.register(component, 'updater');
+    super.register(component, 'updateId');
   }
 
   unregisterList(component: React.Component) {
@@ -178,7 +193,8 @@ export class SharedMap<
   }
 
   useList() {
-    super.useState('updater');
+    super.useState('updateId');
+    return this.state.updateId;
   }
 
   async useStorage(options: StorageOptions) {
