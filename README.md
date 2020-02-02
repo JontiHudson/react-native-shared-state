@@ -118,12 +118,10 @@ To start using shared states first import the class **SharedState** from your _n
 Create a new instance of the **SharedState** class with the name of your shared state. (This could be a global state, or a more specific shared state as seen later on.)
 
 ```
-const ExampleState = SharedState(defaultState: object, options?:{validator?: object, debugMode?: boolean});
+const ExampleState = SharedState(defaultState: object, options?:{ debugMode?: boolean });
 ```
 
 _defaultState - An object of key/value pairs that will be the initial state and the state which the share state will return to on reset(). Note: state values can be all types except functions._
-
-_validator (optional) - An object with where values are the datatypes required in string form (see using validation)._
 
 _debugMode (optional) - Provides console logging of internal processes to aid debugging._
 
