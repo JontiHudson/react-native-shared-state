@@ -38,7 +38,7 @@ _Note: this problem would be better suited to using local state but provides a c
 Create a shared state
 
 ```
-import SharedState from "react-native-shared-state";
+import { SharedState } from "react-native-shared-state";
 
 export const CounterState = new SharedState({
   counter: 0
@@ -191,11 +191,11 @@ ExampleState.reset();
 
 ### Using Hooks
 
-With react native version 0.59.0 we can now use hooks! This allows us to write components much more elegantly as functions. The **useState(_propName_)** utilises the power of hooks to re-render the function on property change. Now it can be done in a single line.
+With react native version 0.59.0 we can now use hooks! This allows us to write components much more elegantly as functions. The **useState(_propName_)** utilises the power of hooks to re-render the function on property change. Using a shared state (see _Create a shared state_) this can be done with a single line.
 
 ```
 export default function DisplayCounter(props) {
-  const [counter] = CounterState.useState('counter');
+  const [counter, setCounter] = CounterState.useState('counter');
 
   return (
     <View>

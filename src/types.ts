@@ -11,7 +11,8 @@ export type StorageOptions = {
   saveOnBackground?: boolean;
 };
 
-export type UpdateKeys<State> = keyof State | (keyof State)[];
+export type UpdateKey<State> = keyof State;
+export type UpdateKeys<State> = UpdateKey<State> | UpdateKey<State>[];
 
 export type OrganiseFunction<E extends Element> = {
   filter?: (element: E) => boolean;

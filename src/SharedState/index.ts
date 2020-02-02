@@ -5,7 +5,7 @@ import { StateCache } from './StateCache';
 import { StorageHandler } from './StorageHandler';
 
 import { onMount, onUnMount, useReRender } from '../helpers';
-import { State, StorageOptions, UpdateKeys } from '../types';
+import { State, StorageOptions, UpdateKey, UpdateKeys } from '../types';
 
 type StateOptions = {
   debugMode?: boolean;
@@ -144,21 +144,28 @@ export class SharedState<S extends State> {
   }
 
   // HOOKS
-  useState(updateKeys: UpdateKeys<S>) {
+  useState<Key extends UpdateKey<S>>(
+    updateKey: Key,
+  ): [S[Key], (newValue: S[Key]) => void] {
     const componentId = Symbol('Hook ID');
 
     const reRender = useReRender();
 
     onMount(() => {
-      this.componentRegister.register(componentId, updateKeys, reRender);
-      this.debugger({ registerHook: { componentId, updateKeys } });
+      this.componentRegister.register(componentId, updateKey, reRender);
+      this.debugger({ registerHook: { componentId, updateKey } });
     });
     onUnMount(() => {
       this.componentRegister.unregister(componentId);
       this.debugger({ unregisterHook: { componentId } });
     });
 
-    return [this.state, this.setState.bind(this)];
+    const setValue = (newValue: S[Key]) => {
+      // @ts-ignore
+      this.setState({ [updateKey]: newValue });
+    };
+
+    return [this.state[updateKey], setValue];
   }
 
   // STORAGE PERSIST

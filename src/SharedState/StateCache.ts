@@ -10,13 +10,13 @@ export class StateCache<S extends State> {
     this._initialise(defaultState);
   }
 
-  reset(resetData: S = deepClone(this.default)) {
+  reset(resetData?: S) {
     this.prev = this.current;
-    this.current = resetData;
+    this.current = resetData || deepClone(this.default);
   }
 
   updateProp<Key extends keyof S>(key: Key, value: S[Key]) {
-    if (this.prev[key] === this.current[key]) {
+    if ((this.current[key] = value)) {
       return false;
     }
 
