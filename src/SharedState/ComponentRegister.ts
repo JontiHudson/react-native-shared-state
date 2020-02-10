@@ -11,35 +11,30 @@ export class ComponentRegister<S extends State> {
   map: Map<RegisterKey, UpdateFunction<S>>;
 
   constructor() {
-    this.map = new Map();
+    this.map = new Map<RegisterKey, UpdateFunction<S>>();
   }
 
   register(
     registerKey: RegisterKey,
     updateKeys: UpdateKeys<S>,
-    updateState: () => void,
+    reRenderComponent: () => void,
   ) {
     const updateKeysArray = toArray(updateKeys);
 
-    function onUpdate(
-      updateProps: Partial<S> | true,
-      unregisterIfNotUpdated?: boolean,
-    ) {
+    function onUpdate(updateProps: Partial<S> | true) {
       if (
         updateProps === true ||
         Object.keys(updateProps).some(key => updateKeysArray.includes(key))
       ) {
-        updateState();
-      } else if (unregisterIfNotUpdated) {
-        this.unregister(registerKey);
+        reRenderComponent();
       }
     }
 
     this.map.set(registerKey, onUpdate);
   }
 
-  update(updateProps: Partial<S> | true, unregisterIfNotUpdated?: boolean) {
-    this.map.forEach(onUpdate => onUpdate(updateProps, unregisterIfNotUpdated));
+  update(updateProps: Partial<S> | true) {
+    this.map.forEach(onUpdate => onUpdate(updateProps));
   }
 
   unregister(registerKey: RegisterKey) {

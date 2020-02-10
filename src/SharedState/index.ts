@@ -63,9 +63,7 @@ export class SharedState<S extends State> {
 
       for (const key in partialState) {
         // To reduce unwanted component re-renders only update props that have changed
-        if (partialState[key] !== current[key]) {
-          this.stateCache.updateProp(key, partialState[key]);
-
+        if (this.stateCache.updateProp(key, partialState[key])) {
           // changed prop added to updatedState
           updatedState[key] = partialState[key];
           updated = true;
@@ -77,6 +75,8 @@ export class SharedState<S extends State> {
         this.componentRegister.update(updatedState);
         this.debugger({ send: updatedState });
       }
+
+      if (callback) callback();
     } catch (error) {
       throw ExtendedError.transform(error, {
         name: 'State Error',
@@ -85,13 +85,13 @@ export class SharedState<S extends State> {
         severity: 'HIGH',
       });
     }
-
-    if (callback) callback();
   }
 
-  refresh() {
+  refresh(callback?: () => void) {
     try {
       this.componentRegister.update(true);
+
+      if (callback) callback();
     } catch (error) {
       throw ExtendedError.transform(error, {
         name: 'State Error',
@@ -102,19 +102,16 @@ export class SharedState<S extends State> {
     }
   }
 
-  reset(resetData?: S) {
-    const UNREGISTER_IF_NOT_UPDATED = true;
-
+  reset(resetData?: S, callback?: () => void) {
     try {
       this.stateCache.reset(resetData);
-      this.componentRegister.update(
-        this.stateCache.current,
-        UNREGISTER_IF_NOT_UPDATED,
-      );
+      this.componentRegister.update(this.stateCache.current);
 
-      if (this.storageHandler) this.storageHandler.reset();
+      if (this.storageHandler) this.storageHandler.reset(resetData);
 
       this.debugger({ resetState: this.stateCache.current });
+
+      if (callback) callback();
     } catch (error) {
       throw ExtendedError.transform(error, {
         name: 'State Error',
@@ -128,11 +125,11 @@ export class SharedState<S extends State> {
   register(component: React.Component, updateKeys: UpdateKeys<S>) {
     const sharedStateId = Symbol('Shared State ID');
 
-    function updateState() {
+    function reRenderComponent() {
       component.setState({ [sharedStateId]: Symbol('Shared State Updater') });
     }
 
-    this.componentRegister.register(component, updateKeys, updateState);
+    this.componentRegister.register(component, updateKeys, reRenderComponent);
 
     this.debugger({ register: { component, updateKeys } });
   }
@@ -144,15 +141,20 @@ export class SharedState<S extends State> {
   }
 
   // HOOKS
-  useState<Key extends UpdateKey<S>>(
-    updateKey: Key,
-  ): [S[Key], (newValue: S[Key]) => void] {
+
+  useState(
+    updateKey: UpdateKeys<S>,
+  ): [S, (partialState: Partial<S>, callback?: () => void) => void] {
     const componentId = Symbol('Hook ID');
 
-    const reRender = useReRender();
+    const reRenderComponent = useReRender();
 
     onMount(() => {
-      this.componentRegister.register(componentId, updateKey, reRender);
+      this.componentRegister.register(
+        componentId,
+        updateKey,
+        reRenderComponent,
+      );
       this.debugger({ registerHook: { componentId, updateKey } });
     });
     onUnMount(() => {
@@ -160,17 +162,17 @@ export class SharedState<S extends State> {
       this.debugger({ unregisterHook: { componentId } });
     });
 
-    const setValue = (newValue: S[Key]) => {
-      // @ts-ignore
-      this.setState({ [updateKey]: newValue });
+    const setValue = (partialState: Partial<S>, callback?: () => void) => {
+      this.setState(partialState, callback);
     };
 
-    return [this.state[updateKey], setValue];
+    return [this.state, setValue];
   }
 
   // STORAGE PERSIST
-  async useStorage(options: StorageOptions) {
-    this.storageHandler = new StorageHandler<S>(this.stateCache, options);
+  async initializeStorage(options: StorageOptions) {
+    this.storageHandler =
+      this.storageHandler || new StorageHandler<S>(this.stateCache, options);
 
     try {
       this.reset(await this.storageHandler.get());
@@ -187,6 +189,14 @@ export class SharedState<S extends State> {
       storageError.handle();
       return false;
     }
+  }
+
+  useStorage(options: StorageOptions, callback?: () => void) {
+    onMount(async () => {
+      await this.initializeStorage(options);
+
+      if (callback) callback();
+    });
   }
 
   save() {

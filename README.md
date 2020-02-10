@@ -193,11 +193,11 @@ With react native version 0.59.0 we can now use hooks! This allows us to write c
 
 ```
 export default function DisplayCounter(props) {
-  const [counter, setCounter] = CounterState.useState('counter');
+  const [state, setState] = CounterState.useState('counter');
 
   return (
     <View>
-      <Text>{counter}</Text>
+      <Text>{state.counter}</Text>
     </View>
   );
 }
@@ -212,12 +212,20 @@ export default function DisplayCounter(props) {
 **Shared State** uses react native's _AsyncStorage_ to save the state between sessions. **useStorage()** loads the state from local storage and ensures the state is saved when the app closes. Since _AsyncStorage_ is asynchronous the method returns a promise, succeeding on set up.
 
 ```
-await ExampleState.useStorage(storeName: string, options?:{saveOnBackground?: boolean, encryptionKey?: string});
+await ExampleState.intializeStorage(options: {storeName: string, saveOnBackground?: boolean, encryptionKey?: string});
 ```
 
 _saveOnBackground - If true the app will try to save the data automatically when backgrounded._
 
 _encryptionKey - If provided, the state will be stored under AES encrpytion using the key._
+
+#
+
+Or as a hook that initalizes on component mounting.
+
+```
+ExampleState.useStorage(options: {storeName: string, saveOnBackground?: boolean, encryptionKey?: string});
+```
 
 #
 

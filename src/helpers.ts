@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useLayoutEffect, useRef } from 'react';
 import ExtendedError from 'extended_err';
 
 export function deepClone<O extends Object>(object: O): O {
@@ -40,18 +40,21 @@ export function toArray<D>(data: D | D[]): D[] {
 }
 
 export function onMount(mountFunction: () => void) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     mountFunction();
   }, []);
 }
 
 export function onUnMount(unMountFunction: () => void) {
-  useEffect(() => unMountFunction, []);
+  useLayoutEffect(() => unMountFunction, []);
 }
 
 function useIsMounted() {
-  const isMounted = useRef(true);
+  const isMounted = useRef(null);
 
+  onMount(() => {
+    isMounted.current = true;
+  });
   onUnMount(() => {
     isMounted.current = false;
   });
@@ -61,7 +64,6 @@ function useIsMounted() {
 
 export function useReRender() {
   const isMounted = useIsMounted();
-
   const setState = useState({})[1];
 
   return () => isMounted.current && setState({});

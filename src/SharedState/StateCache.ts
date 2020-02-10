@@ -4,10 +4,16 @@ import { State } from '../types';
 export class StateCache<S extends State> {
   default: S;
   current: S;
-  prev: S;
+  prev: S | {};
 
   constructor(defaultState: S) {
     this._initialise(defaultState);
+  }
+
+  private _initialise(state: S) {
+    this.default = state;
+    this.current = deepClone(state);
+    this.prev = {};
   }
 
   reset(resetData?: S) {
@@ -16,11 +22,11 @@ export class StateCache<S extends State> {
   }
 
   updateProp<Key extends keyof S>(key: Key, value: S[Key]) {
-    if ((this.current[key] = value)) {
+    if (this.current[key] === value) {
       return false;
     }
 
-    this.prev[key] = this.current[key];
+    (this.prev as S)[key] = this.current[key];
 
     if (this.current === undefined) {
       delete this.current;
@@ -28,11 +34,5 @@ export class StateCache<S extends State> {
       this.current[key] = value;
     }
     return true;
-  }
-
-  private _initialise(state: S) {
-    this.default = state;
-    this.current = deepClone(state);
-    this.prev = { ...this.current };
   }
 }

@@ -1,9 +1,7 @@
 export type Element = { [key: string]: any };
 export type State = { [key: string]: any };
 
-export type Map<E extends Element> = {
-  [key: string]: E;
-};
+export type Map<E extends Element> = { [key: string]: E };
 
 export type StorageOptions = {
   storeName: string;

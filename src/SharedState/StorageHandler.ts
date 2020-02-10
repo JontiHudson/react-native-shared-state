@@ -47,13 +47,15 @@ export class StorageHandler<S extends State> {
     }
   }
 
-  async reset() {
-    await AsyncStorage.removeItem(this.storeName);
+  async reset(resetData?: S) {
+    resetData
+      ? await this.save(resetData)
+      : await AsyncStorage.removeItem(this.storeName);
   }
 
-  async save() {
+  async save(saveData?: S) {
     try {
-      let stateString = JSON.stringify(this.stateCache.current);
+      let stateString = JSON.stringify(saveData || this.stateCache.current);
       if (this.encryptionKey) {
         stateString = CryptoJS.AES.encrypt(
           stateString,

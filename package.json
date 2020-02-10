@@ -1,6 +1,6 @@
 {
   "name": "react-native-shared-state",
-  "version": "0.9.1",
+  "version": "0.9.10",
   "description": "Create shared states that can be connected to multiple react native components, allowing for simple global state management.",
   "main": "./build/index.js",
   "types": "./types/index.d.ts",

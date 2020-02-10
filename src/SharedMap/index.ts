@@ -14,7 +14,7 @@ type MapOptions<E extends Element> = {
   defaultData?: E[];
 };
 
-type ListState = { updateId: Symbol };
+type ListState = { __updateId: Symbol };
 
 export class SharedMap<
   E extends Element,
@@ -27,7 +27,7 @@ export class SharedMap<
   constructor(key: K, options: MapOptions<E> = {}) {
     const { debugMode, defaultData = [] } = options;
 
-    super({ updateId: Symbol('Initial updater') }, { debugMode });
+    super({ __updateId: Symbol('Initial updater') }, { debugMode });
 
     this.elementRegister = new ComponentRegister();
     this.mapCache = new MapCache<E, K>(defaultData, key);
@@ -75,9 +75,9 @@ export class SharedMap<
     let memoValue: T = null;
 
     return () => {
-      if (this.state.updateId !== lastUpdated) {
+      if (this.state.__updateId !== lastUpdated) {
         memoValue = memoFunction(this.array);
-        lastUpdated = this.state.updateId;
+        lastUpdated = this.state.__updateId;
       }
       return memoValue;
     };
@@ -118,14 +118,9 @@ export class SharedMap<
   }
 
   resetData(resetMap?: Map<E>) {
-    const UNREGISTER_IF_NOT_UPDATED = true;
-
     try {
       this.mapCache.reset(resetMap);
-      this.elementRegister.update(
-        this.mapCache.current,
-        UNREGISTER_IF_NOT_UPDATED,
-      );
+      this.elementRegister.update(this.mapCache.current);
 
       super.reset();
 
@@ -168,7 +163,7 @@ export class SharedMap<
   }
 
   registerList(component: React.Component) {
-    super.register(component, 'updateId');
+    super.register(component, '__updateId');
   }
 
   unregisterList(component: React.Component) {
@@ -193,7 +188,7 @@ export class SharedMap<
   }
 
   useList() {
-    return super.useState('updateId');
+    return super.useState('__updateId');
   }
 
   async useStorage(options: StorageOptions) {
