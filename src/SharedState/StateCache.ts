@@ -4,7 +4,7 @@ import { State } from '../types';
 export class StateCache<S extends State> {
   default: S;
   current: S;
-  prev: S | {};
+  prev: Partial<S>;
 
   constructor(defaultState: S) {
     this._initialise(defaultState);

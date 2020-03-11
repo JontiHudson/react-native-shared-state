@@ -11,7 +11,7 @@ export function deepClone<O extends Object>(object: O): O {
       if (Array.isArray(value)) {
         // @ts-ignore
         objectCopy[key] = Object.values(deepClone({ ...value }));
-      } else if (value instanceof Object) {
+      } else if (value.constructor.name === 'Object') {
         // @ts-ignore
         objectCopy[key] = deepClone(value);
       } else {

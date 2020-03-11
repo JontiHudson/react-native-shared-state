@@ -191,7 +191,7 @@ export class SharedMap<
     return super.useState('__updateId');
   }
 
-  async useStorage(options: StorageOptions) {
+  async initializeStorage(options: StorageOptions) {
     this.dataStorageHandler = new StorageHandler<Map<E>>(
       this.mapCache,
       options,
