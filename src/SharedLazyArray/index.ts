@@ -21,6 +21,10 @@ export class SharedLazyArray<D> extends SharedState<LazyArrayState<D>> {
     });
   }
 
+  get data() {
+    return this.state.data;
+  }
+
   async lazyGet(lazyGetFunction: (page: number) => D[] | Promise<D[]>) {
     const { data, page, pageEnd } = this.state;
 

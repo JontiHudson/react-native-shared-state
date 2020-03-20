@@ -39,7 +39,7 @@ export class SharedMap<
     return this.mapCache.current[id];
   }
 
-  get array() {
+  get data() {
     return Object.values(this.mapCache.current);
   }
 
@@ -115,6 +115,15 @@ export class SharedMap<
 
     // optional callback once complete
     if (callback) callback();
+  }
+
+  reset() {
+    throw new ExtendedError({
+      name: 'State Error',
+      code: 'MAP_RESET_ERROR',
+      message: 'Use resetData() to reset map',
+      severity: 'HIGH',
+    });
   }
 
   resetData(resetMap?: Map<E>) {
