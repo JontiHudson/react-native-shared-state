@@ -76,7 +76,7 @@ export class SharedMap<
 
     return () => {
       if (this.state.__updateId !== lastUpdated) {
-        memoValue = memoFunction(this.array);
+        memoValue = memoFunction(this.data);
         lastUpdated = this.state.__updateId;
       }
       return memoValue;

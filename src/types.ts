@@ -22,3 +22,5 @@ export type OrganiserName = string;
 export type OrganiseFunctions<E extends Element, O extends OrganiserName> = {
   [Key in O]: OrganiseFunction<E>;
 };
+
+export type LazyGetFunction<D> = (page: number) => D[] | Promise<D[]>;

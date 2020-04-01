@@ -2,6 +2,8 @@ import ExtendedError from 'extended_err';
 
 import { SharedState } from '../SharedState';
 
+import { LazyGetFunction } from '../types';
+
 type LazyArrayState<D> = {
   data: D[];
   page: number;
@@ -25,7 +27,7 @@ export class SharedLazyArray<D> extends SharedState<LazyArrayState<D>> {
     return this.state.data;
   }
 
-  async lazyGet(lazyGetFunction: (page: number) => D[] | Promise<D[]>) {
+  async lazyGet(lazyGetFunction: LazyGetFunction<D>) {
     const { data, page, pageEnd } = this.state;
 
     if (!pageEnd) {
