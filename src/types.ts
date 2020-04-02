@@ -4,9 +4,11 @@ export type State = { [key: string]: any };
 export type Map<E extends Element> = { [key: string]: E };
 
 export type StorageOptions = {
-  storeName: string;
   encryptionKey?: string;
+  replacer?: (key: string, value: any) => any;
+  reviver?: (key: string, value: any) => any;
   saveOnBackground?: boolean;
+  storeName: string;
 };
 
 export type UpdateKey<State> = keyof State;

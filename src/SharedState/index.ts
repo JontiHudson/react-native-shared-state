@@ -200,7 +200,7 @@ export class SharedState<S extends State> {
   }
 
   save() {
-    this.debugger(`Storing ${this.storageHandler.storeName}`);
+    this.debugger(`Storing ${this.storageHandler.options.storeName}`);
 
     return this.storageHandler.save();
   }

@@ -9,13 +9,11 @@ import { StateCache } from './StateCache';
 import { State, StorageOptions } from '../types';
 
 export class StorageHandler<S extends State> {
-  encryptionKey: string;
+  options: StorageOptions;
   stateCache: StateCache<S>;
-  storeName: string;
 
   constructor(stateCache: StateCache<S>, options: StorageOptions) {
-    this.storeName = options.storeName;
-    this.encryptionKey = options.encryptionKey || null;
+    this.options = options;
     this.stateCache = stateCache;
 
     if (options.saveOnBackground) {
@@ -28,15 +26,18 @@ export class StorageHandler<S extends State> {
 
   async get(): Promise<S> {
     try {
-      let stateString = await AsyncStorage.getItem(this.storeName);
+      let stateString = await AsyncStorage.getItem(this.options.storeName);
 
-      if (this.encryptionKey && stateString) {
-        stateString = CryptoJS.AES.decrypt(stateString, this.encryptionKey);
+      if (this.options.encryptionKey && stateString) {
+        stateString = CryptoJS.AES.decrypt(
+          stateString,
+          this.options.encryptionKey,
+        );
         // @ts-ignore
         stateString = stateString.toString(CryptoJS.enc.Utf8);
       }
 
-      return JSON.parse(stateString);
+      return JSON.parse(stateString, this.options.reviver);
     } catch (error) {
       throw ExtendedError.transform(error, {
         name: 'State Error',
@@ -50,19 +51,22 @@ export class StorageHandler<S extends State> {
   async reset(resetData?: S) {
     resetData
       ? await this.save(resetData)
-      : await AsyncStorage.removeItem(this.storeName);
+      : await AsyncStorage.removeItem(this.options.storeName);
   }
 
   async save(saveData?: S) {
     try {
-      let stateString = JSON.stringify(saveData || this.stateCache.current);
-      if (this.encryptionKey) {
+      let stateString = JSON.stringify(
+        saveData || this.stateCache.current,
+        this.options.replacer,
+      );
+      if (this.options.encryptionKey) {
         stateString = CryptoJS.AES.encrypt(
           stateString,
-          this.encryptionKey,
+          this.options.encryptionKey,
         ).toString();
       }
-      await AsyncStorage.setItem(this.storeName, stateString);
+      await AsyncStorage.setItem(this.options.storeName, stateString);
 
       return true;
     } catch (error) {
@@ -70,7 +74,7 @@ export class StorageHandler<S extends State> {
         name: 'State Error',
         code: 'STORAGE_SAVE_ERROR',
         message: 'Unable to save state',
-        info: { storeName: this.storeName },
+        info: { storeName: this.options.storeName },
         severity: 'HIGH',
       });
 

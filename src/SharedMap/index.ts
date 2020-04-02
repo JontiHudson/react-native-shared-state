@@ -225,7 +225,7 @@ export class SharedMap<
   }
 
   save() {
-    super.debugger(`Storing ${this.dataStorageHandler.storeName}`);
+    super.debugger(`Storing ${this.dataStorageHandler.options.storeName}`);
 
     return this.dataStorageHandler.save();
   }
