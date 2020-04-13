@@ -66,4 +66,16 @@ export class SharedLazyArray<D> extends SharedState<LazyArrayState<D>> {
 
     return null;
   }
+
+  useArray() {
+    const [state] = super.useState([
+      'data',
+      'isError',
+      'isLoading',
+      'page',
+      'pageEnd',
+    ]);
+
+    return state;
+  }
 }
