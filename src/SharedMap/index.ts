@@ -197,7 +197,9 @@ export class SharedMap<
   }
 
   useList() {
-    return super.useState('__updateId');
+    super.useState('__updateId');
+
+    return { __updateId: this.state.__updateId, data: this.data };
   }
 
   async initializeStorage(options: StorageOptions) {
