@@ -179,7 +179,7 @@ export class SharedMap<
     super.unregister(component);
   }
 
-  useElement(id: string) {
+  useElement(id: string | number) {
     const componentId = Symbol('Hook ID');
 
     const reRender = useReRender();
