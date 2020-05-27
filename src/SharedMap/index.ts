@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import ExtendedError from 'extended_err';
 
 import { MapCache } from './MapCache';
@@ -10,7 +11,7 @@ import { onMount, onUnMount, toArray, useReRender } from '../helpers';
 import { Element, Map, StorageOptions } from '../types';
 
 type MapOptions<E extends Element> = {
-  debugMode?: boolean;
+  debugLabel?: string;
   defaultData?: E[];
 };
 
@@ -25,9 +26,9 @@ export class SharedMap<
   private mapCache: MapCache<E, K>;
 
   constructor(key: K, options: MapOptions<E> = {}) {
-    const { debugMode, defaultData = [] } = options;
+    const { debugLabel, defaultData = [] } = options;
 
-    super({ __updateId: Symbol('Initial updater') }, { debugMode });
+    super({ __updateId: Symbol('Initial updater') }, { debugLabel });
 
     this.elementRegister = new ComponentRegister();
     this.mapCache = new MapCache<E, K>(defaultData, key);
@@ -55,6 +56,7 @@ export class SharedMap<
 
       if (updated) {
         this.elementRegister.update(updatedElements);
+        super.setState({ __updateId: Symbol('Initial updater') });
 
         super.debugger({ send: updatedElements });
       }
@@ -68,19 +70,6 @@ export class SharedMap<
     }
 
     if (callback) callback();
-  }
-
-  memo<T>(memoFunction: (array?: E[]) => T) {
-    let lastUpdated: Symbol = null;
-    let memoValue: T = null;
-
-    return () => {
-      if (this.state.__updateId !== lastUpdated) {
-        memoValue = memoFunction(this.data);
-        lastUpdated = this.state.__updateId;
-      }
-      return memoValue;
-    };
   }
 
   refresh() {
@@ -102,6 +91,8 @@ export class SharedMap<
       const updated = this.mapCache.remove(toArray(removeElements));
 
       if (updated) {
+        super.setState({ __updateId: Symbol('Initial updater') });
+
         super.debugger({ removeElements });
       }
     } catch (error) {
@@ -200,6 +191,12 @@ export class SharedMap<
     super.useState('__updateId');
 
     return { __updateId: this.state.__updateId, data: this.data };
+  }
+
+  useMemo<T>(memoFunction: (array?: E[]) => T) {
+    const { __updateId, data } = this.useList();
+
+    return useMemo(() => memoFunction(data), [__updateId]);
   }
 
   async initializeStorage(options: StorageOptions) {

@@ -22,7 +22,7 @@ export class MapCache<E extends Element, K extends keyof E> extends StateCache<
   add(newElements: E[]) {
     const updatedElements: Map<E> = {};
 
-    newElements.forEach(element => {
+    newElements.forEach((element) => {
       if (super.updateProp(element[this.key], element)) {
         updatedElements[element[this.key]] = element;
       }
@@ -34,7 +34,7 @@ export class MapCache<E extends Element, K extends keyof E> extends StateCache<
   remove(removeElements: E[K][]) {
     let updated = false;
 
-    removeElements.forEach(key => {
+    removeElements.forEach((key) => {
       if (super.updateProp(key, undefined)) {
         updated = true;
       }

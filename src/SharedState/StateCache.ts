@@ -21,18 +21,16 @@ export class StateCache<S extends State> {
     this.current = resetData || deepClone(this.default);
   }
 
-  updateProp<Key extends keyof S>(key: Key, value: S[Key]) {
-    if (this.current[key] === value) {
+  updateProp<Key extends keyof S>(key: Key, newValue: S[Key]) {
+    const { [key]: currentValue } = this.current;
+
+    if (currentValue === newValue) {
       return false;
     }
 
-    (this.prev as S)[key] = this.current[key];
+    this.prev[key] = currentValue;
+    this.current[key] = newValue;
 
-    if (this.current === undefined) {
-      delete this.current;
-    } else {
-      this.current[key] = value;
-    }
     return true;
   }
 }

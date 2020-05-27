@@ -1,28 +1,31 @@
 import ExtendedError from 'extended_err';
 
 import { ComponentRegister } from './ComponentRegister';
+import { EventRegister } from './EventRegister';
 import { StateCache } from './StateCache';
 import { StorageHandler } from './StorageHandler';
 
 import { onMount, onUnMount, useReRender } from '../helpers';
-import { State, StorageOptions, UpdateKey, UpdateKeys } from '../types';
+import { State, StorageOptions, UpdateKeys } from '../types';
 
 type StateOptions = {
-  debugMode?: boolean;
+  debugLabel?: string;
 };
 
 export class SharedState<S extends State> {
-  private debugMode: boolean;
+  private debugLabel: string;
   private componentRegister: ComponentRegister<S>;
+  private eventRegister: EventRegister<S>;
   private stateCache: StateCache<S>;
   private storageHandler: StorageHandler<S>;
 
   constructor(defaultState: S, options: StateOptions = {}) {
-    const { debugMode } = options;
+    const { debugLabel } = options;
 
-    this.debugMode = debugMode;
+    this.debugLabel = debugLabel;
     this.componentRegister = new ComponentRegister();
     this.stateCache = new StateCache(defaultState);
+    this.eventRegister = new EventRegister(this.stateCache);
 
     this.debugger(this);
   }
@@ -56,8 +59,6 @@ export class SharedState<S extends State> {
 
   setState(partialState: Partial<S>, callback?: () => void) {
     try {
-      const { current } = this.stateCache;
-
       const updatedState: Partial<S> = {};
       let updated = false;
 
@@ -73,6 +74,7 @@ export class SharedState<S extends State> {
       // Only send if a change has occured
       if (updated) {
         this.componentRegister.update(updatedState);
+        this.eventRegister.run(updatedState);
         this.debugger({ send: updatedState });
       }
 
@@ -138,6 +140,15 @@ export class SharedState<S extends State> {
     this.componentRegister.unregister(component);
 
     this.debugger({ unregister: { component } });
+  }
+
+  // EVENTS
+
+  addListener(
+    trigger: keyof S | (keyof S)[],
+    callback: (current: S, prev: Partial<S>) => void,
+  ) {
+    return this.eventRegister.add(trigger, callback);
   }
 
   // HOOKS
@@ -206,8 +217,8 @@ export class SharedState<S extends State> {
   }
 
   // DEBUGGING
-  debugger(log: any) {
-    if (this.debugMode) console.log(log);
+  debugger(...log: any[]) {
+    if (this.debugLabel) console.log(this.debugLabel, ...log);
   }
 
   toString() {
